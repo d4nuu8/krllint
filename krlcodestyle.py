@@ -44,12 +44,17 @@ class StyleChecker:
                 self._check_file(target)
 
     def _check_directory(self, dirname):
-        for _, _, filenames in os.walk(dirname):
-            for filename in filter(lambda file: file.endswith(self.extensions), filenames):
-                self._check_file(filename)
+        for dirpath, _, filenames in os.walk(dirname):
+            for filename in sorted(filter(lambda file: file.endswith(self.extensions), filenames)):
+                self._check_file(os.path.join(dirpath, filename))
 
     def _check_file(self, filename):
         print(filename)
+
+        with open(filename) as content:
+            lines = content.readlines()
+
+        print(lines)
 
 
 def _parse_args():
