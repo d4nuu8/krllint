@@ -1,3 +1,3 @@
 .PHONY: lint
 lint:
-	pylint krlcodestyle.py
+	pylint -f colorized krlcodestyle.py
