@@ -27,5 +27,45 @@
 Checks and automatically fixes KRL (KUKA Robot Language) code.
 """
 
+import os
+
+__version__ = "0.1.0"
+
+class StyleChecker:
+    def __init__(self, options):
+        self.options = options
+        self.extensions = (".src", ".dat", ".sub")
+
+    def check(self):
+        for target in self.options.target:
+            if os.path.isdir(target):
+                self._check_directory(target)
+            else:
+                self._check_file(target)
+
+    def _check_directory(self, dirname):
+        for _, _, filenames in os.walk(dirname):
+            for filename in filter(lambda file: file.endswith(self.extensions), filenames):
+                self._check_file(filename)
+
+    def _check_file(self, filename):
+        print(filename)
+
+
+def _parse_args():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("target", nargs="*", help="file or folder to check")
+
+    return parser.parse_args()
+
+
+def _main():
+    style_checker = StyleChecker(_parse_args())
+    style_checker.check()
+
+
 if __name__ == "__main__":
-    pass
+    _main()
