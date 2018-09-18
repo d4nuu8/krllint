@@ -28,13 +28,58 @@ Checks and automatically fixes KRL (KUKA Robot Language) code.
 """
 
 import os
+import inspect
+from abc import ABC, abstractmethod
 
 __version__ = "0.1.0"
+
+
+CHECKERS = []
+
+
+def register_checker(checker):
+    if not checker in CHECKERS:
+        CHECKERS.append(checker())
+    return checker
+
+
+class BaseChecker(ABC):
+    @abstractmethod
+    def check(self):
+        pass
+
+    @abstractmethod
+    def fix(self):
+        pass
+
+
+####################################################################################################
+# Checkers
+####################################################################################################
+
+
+@register_checker
+class PrintLineChecker(BaseChecker):
+    def check(self, line):
+        print(line)
+    def fix(self):
+        pass
+
+
+####################################################################################################
+# Framework
+####################################################################################################
+
 
 class StyleChecker:
     def __init__(self, options):
         self.options = options
         self.extensions = (".src", ".dat", ".sub")
+
+        self.line = None
+        self.number_of_lines = 0
+
+    checkers = CHECKERS
 
     def check(self):
         for target in self.options.target:
@@ -54,7 +99,31 @@ class StyleChecker:
         with open(filename) as content:
             lines = content.readlines()
 
-        print(lines)
+        self.number_of_lines = len(lines)
+
+        for line in lines:
+            for checker in StyleChecker.checkers:
+                self.line = line
+                self._run_check(checker)
+
+    def _run_check(self, checker):
+        return self._run_method(checker.check)
+
+    def _run_fix(self, checker):
+        return self._run_method(checker.fix)
+
+    def _run_method(self, method):
+        parameters = []
+        for parameter in _get_parameters(method):
+            parameters.append(getattr(self, parameter))
+
+        return method(*parameters)
+
+
+def _get_parameters(method):
+    return [parameter.name
+            for parameter in inspect.signature(method).parameters.values()
+            if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
 
 
 def _parse_args():
