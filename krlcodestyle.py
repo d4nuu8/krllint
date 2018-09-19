@@ -71,13 +71,45 @@ class PrintLineChecker(BaseChecker):
 ####################################################################################################
 
 
+class CheckerParameters:
+    def __init__(self):
+        self._lines = []
+        self._next = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._next == self.total_lines:
+            raise StopIteration
+        else:
+            self._next += 1
+            return self.lines[self._next - 1]
+
+    @property
+    def lines(self):
+        return self._lines
+
+    @lines.setter
+    def lines(self, value):
+        self._lines = value
+        self._next = 0
+
+    @property
+    def total_lines(self):
+        return len(self._lines)
+
+    @property
+    def line(self):
+        return self.lines[self._next - 1] if self._next <= self.total_lines else None
+
+
 class StyleChecker:
     def __init__(self, options):
         self.options = options
         self.extensions = (".src", ".dat", ".sub")
 
-        self.line = None
-        self.number_of_lines = 0
+        self._parameters = CheckerParameters()
 
     checkers = CHECKERS
 
@@ -97,13 +129,10 @@ class StyleChecker:
         print(filename)
 
         with open(filename) as content:
-            lines = content.readlines()
+            self._parameters.lines = content.readlines()
 
-        self.number_of_lines = len(lines)
-
-        for line in lines:
+        for _ in self._parameters:
             for checker in StyleChecker.checkers:
-                self.line = line
                 self._run_check(checker)
 
     def _run_check(self, checker):
@@ -115,7 +144,7 @@ class StyleChecker:
     def _run_method(self, method):
         parameters = []
         for parameter in _get_parameters(method):
-            parameters.append(getattr(self, parameter))
+            parameters.append(getattr(self._parameters, parameter))
 
         return method(*parameters)
 
