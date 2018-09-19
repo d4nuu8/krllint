@@ -38,7 +38,7 @@ CHECKERS = []
 
 
 def register_checker(checker):
-    if not checker in CHECKERS:
+    if checker not in CHECKERS:
         CHECKERS.append(checker())
     return checker
 
@@ -53,22 +53,23 @@ class BaseChecker(ABC):
         pass
 
 
-####################################################################################################
+################################################################################
 # Checkers
-####################################################################################################
+################################################################################
 
 
 @register_checker
 class PrintLineChecker(BaseChecker):
     def check(self, line):
         print(line)
+
     def fix(self):
         pass
 
 
-####################################################################################################
+################################################################################
 # Framework
-####################################################################################################
+################################################################################
 
 
 class CheckerParameters:
@@ -101,7 +102,9 @@ class CheckerParameters:
 
     @property
     def line(self):
-        return self.lines[self._next - 1] if self._next <= self.total_lines else None
+        return (self.lines[self._next - 1]
+                if self._next <= self.total_lines
+                else None)
 
 
 class StyleChecker:
@@ -122,7 +125,8 @@ class StyleChecker:
 
     def _check_directory(self, dirname):
         for dirpath, _, filenames in os.walk(dirname):
-            for filename in sorted(filter(lambda file: file.endswith(self.extensions), filenames)):
+            for filename in sorted(filter(
+                    lambda file: file.endswith(self.extensions), filenames)):
                 self._check_file(os.path.join(dirpath, filename))
 
     def _check_file(self, filename):
@@ -159,7 +163,8 @@ def _parse_args():
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument("--version", action="version",
+                        version=f"%(prog)s {__version__}")
     parser.add_argument("target", nargs="*", help="file or folder to check")
 
     return parser.parse_args()
