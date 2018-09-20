@@ -28,6 +28,7 @@ Checks and automatically fixes KRL (KUKA Robot Language) code.
 """
 
 import os
+import re
 import inspect
 from abc import ABC, abstractmethod
 
@@ -59,12 +60,18 @@ class BaseChecker(ABC):
 
 
 @register_checker
-class PrintLineChecker(BaseChecker):
+class TrailingWhitespace(BaseChecker):
     def check(self, line):
-        print(line)
+        """E101 trailing whitespace"""
+        line = line.rstrip("\r\n")
+        stripped_line = line.rstrip()
+        if line != stripped_line:
+            return len(stripped_line)
 
-    def fix(self):
-        pass
+        return None
+
+    def fix(self, line):
+        return line.strip() + "\n"
 
 
 ################################################################################
@@ -85,7 +92,7 @@ class CheckerParameters:
             raise StopIteration
         else:
             self._next += 1
-            return self.lines[self._next - 1]
+            return self.lines[self.line_number]
 
     @property
     def lines(self):
@@ -97,14 +104,37 @@ class CheckerParameters:
         self._next = 0
 
     @property
+    def line_number(self):
+        return self._next - 1
+
+    @property
     def total_lines(self):
         return len(self._lines)
 
     @property
     def line(self):
-        return (self.lines[self._next - 1]
-                if self._next <= self.total_lines
+        return (self.lines[self.line_number]
+                if self.line_number < self.total_lines
                 else None)
+
+
+class Reporter:
+    ERROR_CODE_PATTERN = re.compile(r"^[EW]\d+")
+
+    def __init__(self):
+        self._filename = None
+
+    def start_file(self, filename):
+        self._filename = filename
+        print(filename)
+
+    def error(self, line_number, offset, checker):
+        error_code = Reporter.ERROR_CODE_PATTERN.match(
+            checker.check.__doc__).group(0)
+        description = checker.check.__doc__
+
+        print(f"{self._filename}:{line_number}:{offset}: {description}")
+
 
 
 class StyleChecker:
@@ -113,6 +143,7 @@ class StyleChecker:
         self.extensions = (".src", ".dat", ".sub")
 
         self._parameters = CheckerParameters()
+        self._reporter = Reporter()
 
     checkers = CHECKERS
 
@@ -130,14 +161,20 @@ class StyleChecker:
                 self._check_file(os.path.join(dirpath, filename))
 
     def _check_file(self, filename):
-        print(filename)
+        self._reporter.start_file(filename)
 
         with open(filename) as content:
             self._parameters.lines = content.readlines()
 
         for _ in self._parameters:
             for checker in StyleChecker.checkers:
-                self._run_check(checker)
+                self._check_result(self._run_check(checker), checker)
+
+    def _check_result(self, result, checker):
+        if result is None:
+            return
+        self._reporter.error(self._parameters.line_number, result, checker)
+
 
     def _run_check(self, checker):
         return self._run_method(checker.check)
