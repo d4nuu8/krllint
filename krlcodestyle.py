@@ -98,45 +98,52 @@ class TrailingWhitespace(BaseChecker):
         return line.strip() + "\n"
 
 
+class BaseMixedCaseChecker(BaseChecker):
+    @property
+    def pattern(self):
+        return re.compile(r"", re.IGNORECASE)
+
+    def check(self, line):
+        if line.lstrip().startswith(";"):
+            return
+
+        for match in self.pattern.finditer(line):
+            if not str(match.group(1)).isupper():
+                yield match.start()
+
+    def fix(self, line):
+        return self.pattern.sub(self._fix_match, line)
+
+    def _fix_match(self, match):
+        target = str(match.group(1))
+        return target if target.isupper() else target.upper()
+
+
 @register_checker
-class LowerOrMixedCaseKeyword(BaseChecker):
-    KEYWORD_PATTERN = re.compile(r"(\b" + r'\b|'.join(KEYWORDS) + r")", re.IGNORECASE)
+class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
+    @property
+    def pattern(self):
+        return re.compile(r"(\b" + r'\b|'.join(KEYWORDS) + r")", re.IGNORECASE)
 
     def check(self, line):
         """E200 lower or mixed case keyword"""
-        if line.lstrip().startswith(";"):
-            return
-
-        for match in LowerOrMixedCaseKeyword.KEYWORD_PATTERN.finditer(line):
-            if not str(match.group(1)).isupper():
-                yield match.start()
+        return super().check(line)
 
     def fix(self, line):
-        return LowerOrMixedCaseKeyword.KEYWORD_PATTERN.sub(self._fix_match, line)
-
-    def _fix_match(self, match):
-        keyword = str(match.group(1))
-        return keyword if keyword.isupper() else keyword.upper()
+        return super().fix(line)
 
 @register_checker
-class LowerOrMixedCaseBuiltInType(BaseChecker):
-    TYPE_PATTERN = re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")", re.IGNORECASE)
+class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
+    @property
+    def pattern(self):
+        return re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")", re.IGNORECASE)
 
     def check(self, line):
         """E201 lower or mixed case built-in type"""
-        if line.lstrip().startswith(";"):
-            return
-
-        for match in LowerOrMixedCaseBuiltInType.TYPE_PATTERN.finditer(line):
-            if not str(match.group(1)).isupper():
-                yield match.start()
+        return super().check(line)
 
     def fix(self, line):
-        return LowerOrMixedCaseBuiltInType.TYPE_PATTERN.sub(self._fix_match, line)
-
-    def _fix_match(self, match):
-        keyword = str(match.group(1))
-        return keyword if keyword.isupper() else keyword.upper()
+        return super().fix(line)
 
 
 ################################################################################
