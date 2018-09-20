@@ -37,6 +37,23 @@ __version__ = "0.1.0"
 
 CHECKERS = []
 
+KEYWORDS = [
+    "GLOBAL", "PUBLIC", "DEF", "END", "DEFFCT", "ENDFCT", "DEFDAT", "ENDDAT",
+    "IN", "OUT", "IF", "THEN", "ELSE", "ENDIF", "FOR", "TO", "STEP", "ENDFOR",
+    "LOOP", "ENDLOOP", "REPEAT", "UNTIL", "SWTICH", "CASE", "DEFAULT",
+    "ENDSWITCH", "WAIT", "SEC", "WHILE", "ENDWHILE", "SIGNAL", "CONST", "ANIN",
+    "ANOUT", "ON", "OFF", "DELAY", "MINIMUM", "MAXIMUM", "CONTINUE", "EXIT",
+    "GOTO", "HALT", "RETURN", "RESUME", "PULSE", "BRAKE", "INTERRUPT", "DECL",
+    "WHEN", "DO", "ENABLE", "DISABLE", "TRIGGER", "DISTANCE", "PATH", "ONSTART",
+    "DELAY", "PTP", "LIN", "CIRC", "PTP_REL", "LIN_REL", "SPLINE", "ENDSPLINE",
+    "SPL", "SPTP", "SLIN", "SCIRC", "TIME_BLOCK", "START", "PART", "END"
+]
+
+BUILT_IN_TYPES = [
+    "INT", "REAL", "CHAR", "FRAME", "POS", "E6POS", "AXIS", "E6AXIS", "STRUC",
+    "ENUM"
+]
+
 
 def register_checker(checker):
     if checker not in CHECKERS:
@@ -72,6 +89,15 @@ class TrailingWhitespace(BaseChecker):
 
     def fix(self, line):
         return line.strip() + "\n"
+
+
+@register_checker
+class LowerOrMixedCaseKeyword(BaseChecker):
+    def check(self, line):
+        pass
+
+    def fix(self, line):
+        pass
 
 
 ################################################################################
@@ -166,7 +192,7 @@ class StyleChecker:
         self._reporter.start_file(filename)
 
         with open(filename) as content:
-            self._parameters.lines = self._fixed_lines = content.readlines()            
+            self._parameters.lines = self._fixed_lines = content.readlines()
 
         for _ in self._parameters:
             for checker in StyleChecker.checkers:
@@ -183,7 +209,7 @@ class StyleChecker:
         if result is None:
             return
         self._reporter.error(self._parameters.line_number, result, checker)
-        
+
         if self.options.fix:
             self._fix_line(checker)
 
