@@ -1,4 +1,9 @@
 DEF Test()
-; E101 trailing whitespace
+; E100 trailing whitespace
 INT someVariable   
+
+; E200 lower or mixed case keyword
+if (someVariable) Then
+   ; Do something
+endIF
 END

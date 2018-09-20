@@ -75,17 +75,24 @@ class BaseChecker(ABC):
 # Checkers
 ################################################################################
 
+# Error and warning codes
+#
+# --- Whitespace
+# E100 trailing whitespace
+#
+# --- Style
+# E200 lower or mixed case keyword
+# E201 lower or mixed case built-in type
+
 
 @register_checker
 class TrailingWhitespace(BaseChecker):
     def check(self, line):
-        """E101 trailing whitespace"""
+        """E100 trailing whitespace"""
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
-            return len(stripped_line)
-
-        return None
+            yield len(stripped_line)
 
     def fix(self, line):
         return line.strip() + "\n"
@@ -93,8 +100,16 @@ class TrailingWhitespace(BaseChecker):
 
 @register_checker
 class LowerOrMixedCaseKeyword(BaseChecker):
+    KEYWORD_PATTERN = re.compile(r"(\b" + r'\b|'.join(KEYWORDS) + r")", re.IGNORECASE)
+
     def check(self, line):
-        pass
+        """E200 lower or mixed case keyword"""
+        if line.lstrip().startswith(";"):
+            return
+
+        for match in LowerOrMixedCaseKeyword.KEYWORD_PATTERN.finditer(line):
+            if not str(match.group(1)).isupper():
+                yield match.start()
 
     def fix(self, line):
         pass
@@ -159,7 +174,7 @@ class Reporter:
             checker.check.__doc__).group(0)
         description = checker.check.__doc__
 
-        print(f"{self._filename}:{line_number}:{offset}: {description}")
+        print(f"{self._filename}:{line_number + 1}:{offset + 1}: {description}")
 
 
 
@@ -205,10 +220,12 @@ class StyleChecker:
         with open(filename, "w") as content:
             content.writelines(self._fixed_lines)
 
-    def _check_result(self, result, checker):
-        if result is None:
+    def _check_result(self, results, checker):
+        if results is None:
             return
-        self._reporter.error(self._parameters.line_number, result, checker)
+
+        for result in results:
+            self._reporter.error(self._parameters.line_number, result, checker)
 
         if self.options.fix:
             self._fix_line(checker)
