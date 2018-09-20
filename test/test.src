@@ -9,4 +9,7 @@ Real someThirdVariable
 if (someVariable) Then
    ; Do something
 endIF
+
+; E200 lower or mixed case keyword
+foo b_and bar
 END
