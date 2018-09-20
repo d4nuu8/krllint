@@ -1,0 +1,4 @@
+DEF Test()
+; E101 trailing whitespace
+INT someVariable   
+END
