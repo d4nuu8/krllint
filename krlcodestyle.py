@@ -112,7 +112,11 @@ class LowerOrMixedCaseKeyword(BaseChecker):
                 yield match.start()
 
     def fix(self, line):
-        pass
+        return LowerOrMixedCaseKeyword.KEYWORD_PATTERN.sub(self._fix_match, line)
+
+    def _fix_match(self, match):
+        keyword = str(match.group(1))
+        return keyword if keyword.isupper() else keyword.upper()
 
 
 ################################################################################
@@ -227,8 +231,8 @@ class StyleChecker:
         for result in results:
             self._reporter.error(self._parameters.line_number, result, checker)
 
-        if self.options.fix:
-            self._fix_line(checker)
+            if self.options.fix:
+                self._fix_line(checker)
 
     def _fix_line(self, checker):
         self._fixed_lines[self._parameters.line_number] = self._run_fix(checker)
