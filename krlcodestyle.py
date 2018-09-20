@@ -195,8 +195,7 @@ def _get_parameters(method):
             for parameter in inspect.signature(method).parameters.values()
             if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
 
-
-def _parse_args():
+def _create_arg_parser():
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description=__doc__)
@@ -204,7 +203,10 @@ def _parse_args():
                         version=f"%(prog)s {__version__}")
     parser.add_argument("target", nargs="*", help="file or folder to check")
 
-    return parser.parse_args()
+    return parser
+
+def _parse_args():
+    return _create_arg_parser().parse_args()
 
 
 def _main():
