@@ -145,6 +145,8 @@ class StyleChecker:
         self._parameters = CheckerParameters()
         self._reporter = Reporter()
 
+        self._fixed_lines = []
+
     checkers = CHECKERS
 
     def check(self):
@@ -164,17 +166,29 @@ class StyleChecker:
         self._reporter.start_file(filename)
 
         with open(filename) as content:
-            self._parameters.lines = content.readlines()
+            self._parameters.lines = self._fixed_lines = content.readlines()            
 
         for _ in self._parameters:
             for checker in StyleChecker.checkers:
                 self._check_result(self._run_check(checker), checker)
 
+        if self.options.fix:
+            self._fix_file(filename)
+
+    def _fix_file(self, filename):
+        with open(filename, "w") as content:
+            content.writelines(self._fixed_lines)
+
     def _check_result(self, result, checker):
         if result is None:
             return
         self._reporter.error(self._parameters.line_number, result, checker)
+        
+        if self.options.fix:
+            self._fix_line(checker)
 
+    def _fix_line(self, checker):
+        self._fixed_lines[self._parameters.line_number] = self._run_fix(checker)
 
     def _run_check(self, checker):
         return self._run_method(checker.check)
@@ -201,6 +215,7 @@ def _create_arg_parser():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"%(prog)s {__version__}")
+    parser.add_argument("--fix", action="store_true")
     parser.add_argument("target", nargs="*", help="file or folder to check")
 
     return parser
