@@ -1,6 +1,9 @@
 DEF Test()
 ; E100 trailing whitespace
 INT someVariable   
+; E201 lower or mixed case built-in type
+int someOtherVariable
+Real someThirdVariable
 
 ; E200 lower or mixed case keyword
 if (someVariable) Then

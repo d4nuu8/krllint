@@ -118,6 +118,26 @@ class LowerOrMixedCaseKeyword(BaseChecker):
         keyword = str(match.group(1))
         return keyword if keyword.isupper() else keyword.upper()
 
+@register_checker
+class LowerOrMixedCaseBuiltInType(BaseChecker):
+    TYPE_PATTERN = re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")", re.IGNORECASE)
+
+    def check(self, line):
+        """E201 lower or mixed case built-in type"""
+        if line.lstrip().startswith(";"):
+            return
+
+        for match in LowerOrMixedCaseBuiltInType.TYPE_PATTERN.finditer(line):
+            if not str(match.group(1)).isupper():
+                yield match.start()
+
+    def fix(self, line):
+        return LowerOrMixedCaseBuiltInType.TYPE_PATTERN.sub(self._fix_match, line)
+
+    def _fix_match(self, match):
+        keyword = str(match.group(1))
+        return keyword if keyword.isupper() else keyword.upper()
+
 
 ################################################################################
 # Framework
