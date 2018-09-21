@@ -18,4 +18,11 @@ foo<>bar
 foo <=bar
 foo+ bar
 foo = bar
+
+; E102 wrong indentation
+IF (someVariable) THEN
+foo
+ELSE
+      bar
+ENDIF
 END

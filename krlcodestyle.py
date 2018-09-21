@@ -59,6 +59,18 @@ OPERATORS = [
     "+", "-", "*", "/", ":", "=", "==", "<>", ">", "<", ">=", "<="
 ]
 
+INDENT_SIZE = 3
+INDENT_CHAR = " "
+
+INDENT_IDENTIFIERS = [
+    "IF", "ELSE", "FOR", "LOOP", "REPEAT", "SWITCH", "CASE", "DEFAULT", "WHILE"
+]
+
+UNINDENT_IDENTIFIERS = [
+    "ELSE", "ENDIF", "ENDFOR", "ENDLOOP", "UNTIL", "CASE", "DEFAULT",
+    "ENDSWITCH", "ENDWHILE"
+]
+
 
 def _get_parameters(method):
     return [parameter.name
@@ -98,6 +110,7 @@ class BaseChecker(ABC):
 # --- Whitespace
 # E100 trailing whitespace
 # E101 missing whitespace arround operator
+# E102 wrong indentation
 #
 # --- Style
 # E200 lower or mixed case keyword
@@ -115,6 +128,65 @@ class TrailingWhitespace(BaseChecker):
 
     def fix(self, line):
         return line.strip() + "\n"
+
+
+@register_checker
+class IndentationChecker(BaseChecker):
+    INDENT_PATTERN = re.compile(
+        r"(\b" + r'\b|'.join(INDENT_IDENTIFIERS) + r")", re.IGNORECASE)
+
+    UNINDENT_PATTERN = re.compile(
+        r"(\b" + r'\b|'.join(UNINDENT_IDENTIFIERS) + r")", re.IGNORECASE)
+
+    def __init__(self):
+        self._filename = None
+        self._indent_level = 0
+
+    def check(self, line, code_line, filename):
+        """E102 wrong indentation"""
+        if self._filename != filename:
+            self._start_new_file(filename)
+
+        if self._is_unindentation_needed(code_line):
+            self._decrease_indent_level()
+
+        stripped_line = line.lstrip()
+
+        if not stripped_line:
+            return
+
+        indent = len(line) - len(stripped_line)
+        indent_wanted = self._indent_level * INDENT_SIZE
+
+        if self._is_indentation_needed(code_line):
+            self._increase_indent_level()
+
+        if indent != indent_wanted:
+            yield indent
+
+    def fix(self, line):
+        return INDENT_CHAR * (self._indent_level * INDENT_SIZE) + line.lstrip()
+
+
+    def _start_new_file(self, filename):
+        self._filename = filename
+        self._indent_level = 0
+
+    @staticmethod
+    def _is_indentation_needed(code_line):
+        return not IndentationChecker.INDENT_PATTERN.search(code_line) is None
+
+    @staticmethod
+    def _is_unindentation_needed(code_line):
+        return not IndentationChecker.UNINDENT_PATTERN.search(code_line) is None
+
+    def _increase_indent_level(self):
+        self._indent_level += 1
+
+    def _decrease_indent_level(self):
+        self._indent_level -= 1
+        if self._indent_level < 0:
+            self._indent_level = 0
 
 
 class BaseMixedCaseChecker(BaseChecker):
@@ -187,6 +259,7 @@ class CheckerParameters:
     def __init__(self):
         self._lines = []
         self._next = 0
+        self._filename = None
 
     def __iter__(self):
         return self
@@ -198,14 +271,18 @@ class CheckerParameters:
             self._next += 1
             return self.lines[self.line_number]
 
+    def start_new_file(self, filename, lines):
+        self._lines = lines
+        self._next = 0
+        self._filename = filename
+
+    @property
+    def filename(self):
+        return self._filename
+
     @property
     def lines(self):
         return self._lines
-
-    @lines.setter
-    def lines(self, value):
-        self._lines = value
-        self._next = 0
 
     @property
     def line_number(self):
@@ -285,7 +362,9 @@ class StyleChecker:
         self._reporter.start_file(filename)
 
         with open(filename) as content:
-            self._parameters.lines = self._fixed_lines = content.readlines()
+            lines = content.readlines()
+            self._fixed_lines = lines
+            self._parameters.start_new_file(filename, lines)
 
         for _ in self._parameters:
             self._run_checkers(StyleChecker.checkers["common"])
