@@ -256,7 +256,6 @@ class Reporter:
         print(f"{self._filename}:{line_number + 1}:{offset + 1}: {description}")
 
 
-
 class StyleChecker:
     def __init__(self, options):
         self.options = options
@@ -337,8 +336,6 @@ class StyleChecker:
         return method(*parameters)
 
 
-
-
 def _create_arg_parser():
     from argparse import ArgumentParser
 
@@ -349,6 +346,7 @@ def _create_arg_parser():
     parser.add_argument("target", nargs="*", help="file or folder to check")
 
     return parser
+
 
 def _parse_args():
     return _create_arg_parser().parse_args()
