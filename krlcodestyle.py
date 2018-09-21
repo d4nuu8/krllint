@@ -55,6 +55,10 @@ BUILT_IN_TYPES = [
     "ENUM"
 ]
 
+OPERATORS = [
+    "+", "-", "*", "/", ":", "=", "==", "<>", ">", "<", ">=", "<="
+]
+
 
 def register_checker(checker):
     if checker not in CHECKERS:
@@ -80,6 +84,7 @@ class BaseChecker(ABC):
 #
 # --- Whitespace
 # E100 trailing whitespace
+# E101 missing whitespace arround operator
 #
 # --- Style
 # E200 lower or mixed case keyword
@@ -133,6 +138,7 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
     def fix(self, line):
         return super().fix(line)
 
+
 @register_checker
 class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     @property
@@ -145,6 +151,27 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
 
     def fix(self, line):
         return super().fix(line)
+
+
+@register_checker
+class MissingWhiteSpaceArroundOperator(BaseChecker):
+    PATTERN = re.compile(r"(\s)?([+\-*/:=<>]+)(\s)?")
+
+    def check(self, line):
+        """E101 missing whitespace arround operator"""
+        if line.lstrip().startswith(";"):
+            return
+
+        for match in MissingWhiteSpaceArroundOperator.PATTERN.finditer(line):
+            for group in [1, 3]:
+                if match.group(group) is None:
+                    yield match.start(group)
+
+    def fix(self, line):
+        return MissingWhiteSpaceArroundOperator.PATTERN.sub(self._fix_match, line)
+
+    def _fix_match(self, match):
+        return " " + match.group(0).strip() + " "
 
 
 ################################################################################
