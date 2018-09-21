@@ -1,6 +1,6 @@
 .PHONY: lint
 lint:
-	pylint -f colorized krlcodestyle.py || true
+	pylint krlcodestyle.py || true
 
 .PHONY: test
 test:
