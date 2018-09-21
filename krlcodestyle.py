@@ -35,7 +35,7 @@ from abc import ABC, abstractmethod
 __version__ = "0.1.0"
 
 
-CHECKERS = []
+CHECKERS = {"common": [], "code": [], "comment": []}
 
 KEYWORDS = [
     "GLOBAL", "PUBLIC", "DEF", "END", "DEFFCT", "ENDFCT", "DEFDAT", "ENDDAT",
@@ -60,9 +60,22 @@ OPERATORS = [
 ]
 
 
+def _get_parameters(method):
+    return [parameter.name
+            for parameter in inspect.signature(method).parameters.values()
+            if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
+
+
 def register_checker(checker):
-    if checker not in CHECKERS:
-        CHECKERS.append(checker())
+    params = _get_parameters(checker.check)
+
+    if params[1] == "line" and checker not in CHECKERS["common"]:
+        CHECKERS["common"].append(checker())
+    elif params[1] == "code_line" and checker not in CHECKERS["code"]:
+        CHECKERS["code"].append(checker())
+    elif params[1] == "comment_line" and checker not in CHECKERS["comment"]:
+        CHECKERS["comment"].append(checker())
+
     return checker
 
 
@@ -109,16 +122,13 @@ class BaseMixedCaseChecker(BaseChecker):
     def pattern(self):
         return re.compile(r"", re.IGNORECASE)
 
-    def check(self, line):
-        if line.lstrip().startswith(";"):
-            return
-
-        for match in self.pattern.finditer(line):
+    def check(self, code_line):
+        for match in self.pattern.finditer(code_line):
             if not str(match.group(1)).isupper():
                 yield match.start()
 
-    def fix(self, line):
-        return self.pattern.sub(self._fix_match, line)
+    def fix(self, code_line):
+        return self.pattern.sub(self._fix_match, code_line)
 
     @staticmethod
     def _fix_match(match):
@@ -132,12 +142,9 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
     def pattern(self):
         return re.compile(r"(\b" + r'\b|'.join(KEYWORDS) + r")", re.IGNORECASE)
 
-    def check(self, line):
+    def check(self, code_line):
         """E200 lower or mixed case keyword"""
-        return super().check(line)
-
-    def fix(self, line):
-        return super().fix(line)
+        return super().check(code_line)
 
 
 @register_checker
@@ -147,30 +154,24 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
         return re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")",
                           re.IGNORECASE)
 
-    def check(self, line):
+    def check(self, code_line):
         """E201 lower or mixed case built-in type"""
-        return super().check(line)
-
-    def fix(self, line):
-        return super().fix(line)
+        return super().check(code_line)
 
 
 @register_checker
 class MissingWhiteSpaceArroundOperator(BaseChecker):
     PATTERN = re.compile(r"(\s)?([+\-*/:=<>]+)(\s)?")
 
-    def check(self, line):
+    def check(self, code_line):
         """E101 missing whitespace arround operator"""
-        if line.lstrip().startswith(";"):
-            return
-
-        for match in self.PATTERN.finditer(line):
+        for match in self.PATTERN.finditer(code_line):
             for group in [1, 3]:
                 if match.group(group) is None:
                     yield match.start(group)
 
-    def fix(self, line):
-        return self.PATTERN.sub(self._fix_match, line)
+    def fix(self, code_line):
+        return self.PATTERN.sub(self._fix_match, code_line)
 
     @staticmethod
     def _fix_match(match):
@@ -219,6 +220,22 @@ class CheckerParameters:
         return (self.lines[self.line_number]
                 if self.line_number < self.total_lines
                 else None)
+
+    @property
+    def code_line(self):
+        return self.line.split(";", 1)[0]
+
+    @property
+    def comment_line(self):
+        return self.line.split(";", 1)[1]
+
+    @property
+    def is_code(self):
+        return not self.line.lstrip().startswith(";")
+
+    @property
+    def is_comment(self):
+        return ";" in self.line
 
 
 class Reporter:
@@ -272,11 +289,20 @@ class StyleChecker:
             self._parameters.lines = self._fixed_lines = content.readlines()
 
         for _ in self._parameters:
-            for checker in StyleChecker.checkers:
-                self._check_result(self._run_check(checker), checker)
+            self._run_checkers(StyleChecker.checkers["common"])
+
+            if self._parameters.is_code:
+                self._run_checkers(StyleChecker.checkers["code"])
+
+            if self._parameters.is_comment:
+                self._run_checkers(StyleChecker.checkers["comment"])
 
         if self.options.fix:
             self._fix_file(filename)
+
+    def _run_checkers(self, checkers):
+        for checker in checkers:
+            self._check_result(self._run_check(checker), checker)
 
     def _fix_file(self, filename):
         with open(filename, "w") as content:
@@ -304,15 +330,14 @@ class StyleChecker:
     def _run_method(self, method):
         parameters = []
         for parameter in _get_parameters(method):
+            if parameter == "self":
+                continue
             parameters.append(getattr(self._parameters, parameter))
 
         return method(*parameters)
 
 
-def _get_parameters(method):
-    return [parameter.name
-            for parameter in inspect.signature(method).parameters.values()
-            if parameter.kind == parameter.POSITIONAL_OR_KEYWORD]
+
 
 def _create_arg_parser():
     from argparse import ArgumentParser
