@@ -120,7 +120,8 @@ class BaseMixedCaseChecker(BaseChecker):
     def fix(self, line):
         return self.pattern.sub(self._fix_match, line)
 
-    def _fix_match(self, match):
+    @staticmethod
+    def _fix_match(match):
         target = str(match.group(1))
         return target if target.isupper() else target.upper()
 
@@ -143,7 +144,8 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")", re.IGNORECASE)
+        return re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")",
+                          re.IGNORECASE)
 
     def check(self, line):
         """E201 lower or mixed case built-in type"""
@@ -162,15 +164,16 @@ class MissingWhiteSpaceArroundOperator(BaseChecker):
         if line.lstrip().startswith(";"):
             return
 
-        for match in MissingWhiteSpaceArroundOperator.PATTERN.finditer(line):
+        for match in self.PATTERN.finditer(line):
             for group in [1, 3]:
                 if match.group(group) is None:
                     yield match.start(group)
 
     def fix(self, line):
-        return MissingWhiteSpaceArroundOperator.PATTERN.sub(self._fix_match, line)
+        return self.PATTERN.sub(self._fix_match, line)
 
-    def _fix_match(self, match):
+    @staticmethod
+    def _fix_match(match):
         return " " + match.group(0).strip() + " "
 
 
