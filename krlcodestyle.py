@@ -124,7 +124,7 @@ class TrailingWhitespace(BaseChecker):
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
-            yield len(stripped_line)
+            yield len(stripped_line), None
 
     def fix(self, line):
         return line.strip() + "\n"
@@ -162,7 +162,7 @@ class IndentationChecker(BaseChecker):
             self._increase_indent_level()
 
         if indent != indent_wanted:
-            yield indent
+            yield indent, f"found {indent} spaces, exptected {indent_wanted}"
 
     def fix(self, line):
         return INDENT_CHAR * (self._indent_level * INDENT_SIZE) + line.lstrip()
@@ -197,7 +197,7 @@ class BaseMixedCaseChecker(BaseChecker):
     def check(self, code_line):
         for match in self.pattern.finditer(code_line):
             if not str(match.group(1)).isupper():
-                yield match.start()
+                yield match.start(), None
 
     def fix(self, code_line):
         return self.pattern.sub(self._fix_match, code_line)
@@ -240,7 +240,7 @@ class MissingWhiteSpaceArroundOperator(BaseChecker):
         for match in self.PATTERN.finditer(code_line):
             for group in [1, 3]:
                 if match.group(group) is None:
-                    yield match.start(group)
+                    yield match.start(group), None
 
     def fix(self, code_line):
         return self.PATTERN.sub(self._fix_match, code_line)
@@ -325,12 +325,16 @@ class Reporter:
         self._filename = filename
         print(filename)
 
-    def error(self, line_number, offset, checker):
+    def error(self, line_number, result, checker):
         error_code = Reporter.ERROR_CODE_PATTERN.match(
             checker.check.__doc__).group(0)
         description = checker.check.__doc__
 
-        print(f"{self._filename}:{line_number + 1}:{offset + 1}: {description}")
+        column, comment = result
+
+        text = f"{self._filename}:{line_number + 1}:{column + 1}: {description}"
+        text += f" ({comment})" if comment is not None else ""
+        print(text)
 
 
 class StyleChecker:
