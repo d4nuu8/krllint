@@ -15,6 +15,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/d4nuu8/krlcodestyle",
+    py_modules=["krlcodestyle"],
     scripts=["krlcodestyle.py"],
     entry_points={
         "console_scripts": [
