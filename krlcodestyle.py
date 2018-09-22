@@ -32,7 +32,7 @@ import re
 import inspect
 from abc import ABC, abstractmethod
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 CHECKERS = {"common": [], "code": [], "comment": []}
