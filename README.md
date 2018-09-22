@@ -2,7 +2,7 @@
 krlcodestyle checks and automatically fixes KRL (KUKA Robot Language) code.
 
 ## Installation
-Youe can download ```krlcodestyle.py``` either from github or with these command:
+Youe can download ```krlcodestyle.py``` either from github or with this command:
 ```bash
 $ pip install krlcodestyle
 ```
