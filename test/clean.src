@@ -19,10 +19,15 @@ foo <= bar
 foo + bar
 foo = bar
 
-; E102 wrong indentation
+; E103 wrong indentation
 IF (someVariable) THEN
    foo
 ELSE
+   bar
+ENDIF
+
+; E102 line contains tab(s)
+IF (foo) THEN
    bar
 ENDIF
 END

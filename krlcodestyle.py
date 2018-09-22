@@ -110,7 +110,8 @@ class BaseChecker(ABC):
 # --- Whitespace
 # E100 trailing whitespace
 # E101 missing whitespace arround operator
-# E102 wrong indentation
+# E102 line contains tab(s)
+# E103 wrong indentation
 #
 # --- Style
 # E200 lower or mixed case keyword
@@ -131,6 +132,17 @@ class TrailingWhitespace(BaseChecker):
 
 
 @register_checker
+class TabsChecker(BaseChecker):
+    def check(self, line):
+        """E102 line contains tab(s)"""
+        if "\t" in line:
+            yield 0, None
+
+    def fix(self, line):
+        return line.replace("\t", INDENT_CHAR * INDENT_SIZE)
+
+
+@register_checker
 class IndentationChecker(BaseChecker):
     INDENT_PATTERN = re.compile(
         r"(\b" + r'\b|'.join(INDENT_IDENTIFIERS) + r")", re.IGNORECASE)
@@ -143,7 +155,7 @@ class IndentationChecker(BaseChecker):
         self._indent_level = 0
 
     def check(self, line, code_line, filename):
-        """E102 wrong indentation"""
+        """E103 wrong indentation"""
         if self._filename != filename:
             self._start_new_file(filename)
 
