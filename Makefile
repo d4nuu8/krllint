@@ -19,4 +19,4 @@ dist: clean
 
 .PHONY: release
 release: dist
-	twist upload dist/*
+	twine upload dist/*
