@@ -30,4 +30,8 @@ ENDIF
 IF (foo) THEN
    bar
 ENDIF
+
+; E104 extraneous whitespace
+IF (foo) THEN
+ENDIF
 END

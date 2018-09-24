@@ -112,6 +112,7 @@ class BaseChecker(ABC):
 # E101 missing whitespace arround operator
 # E102 line contains tab(s)
 # E103 wrong indentation
+# E104 extraneous whitespace
 #
 # --- Style
 # E200 lower or mixed case keyword
@@ -199,6 +200,22 @@ class IndentationChecker(BaseChecker):
         self._indent_level -= 1
         if self._indent_level < 0:
             self._indent_level = 0
+
+
+@register_checker
+class ExtraneousWhitespace(BaseChecker):
+    WHITESPACE_PATTERN = re.compile(r"\s{2,}")
+
+    def check(self, code_line):
+        """E104 extraneous whitespace"""
+        for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
+            yield match.start(), None
+
+    def fix(self, code_line):
+        return self.WHITESPACE_PATTERN.sub(self._fix_match, code_line)
+
+    def _fix_match(self, code_line):
+        return " "
 
 
 class BaseMixedCaseChecker(BaseChecker):
