@@ -454,8 +454,9 @@ def _create_arg_parser():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"%(prog)s {__version__}")
-    parser.add_argument("--fix", action="store_true")
-    parser.add_argument("target", nargs="*", help="file or folder to check")
+    parser.add_argument("--fix", action="store_true",
+                        help="automatically fix the given inputs")
+    parser.add_argument("target", nargs="+", help="file or folder to check")
 
     return parser
 
