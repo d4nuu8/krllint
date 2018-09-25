@@ -208,8 +208,9 @@ class ExtraneousWhitespace(BaseChecker):
         for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
             yield match.start(), None
 
-    def fix(self, code_line):
-        return self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line)
+    def fix(self, code_line, comment_line):
+        return (self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line) +
+                ((";" + comment_line) if comment_line else ""))
 
 
 class BaseMixedCaseChecker(BaseChecker):
@@ -222,8 +223,9 @@ class BaseMixedCaseChecker(BaseChecker):
             if not str(match.group(1)).isupper():
                 yield match.start(), None
 
-    def fix(self, code_line):
-        return self.pattern.sub(self._fix_match, code_line)
+    def fix(self, code_line, comment_line):
+        return (self.pattern.sub(self._fix_match, code_line) +
+                ((";" + comment_line) if comment_line else ""))
 
     @staticmethod
     def _fix_match(match):
@@ -266,8 +268,9 @@ class MissingWhiteSpaceArroundOperator(BaseChecker):
                 if match.group(group) is None:
                     yield match.start(group), None
 
-    def fix(self, code_line):
-        return self.PATTERN.sub(self._fix_match, code_line)
+    def fix(self, code_line, comment_line):
+        return (self.PATTERN.sub(self._fix_match, code_line) +
+                ((";" + comment_line) if comment_line else ""))
 
     @staticmethod
     def _fix_match(match):
@@ -332,10 +335,10 @@ class CheckerParameters:
 
     @property
     def comment_line(self):
-        if self.line.lstrip().startswith(";"):
+        if len(self.line.split(";")) == 2:
             return self.line.split(";", 1)[1]
 
-        if self.line.lstrip().startswith("&"):
+        if (self.line.split("&")) == 2:
             return self.line.split("&", 1)[1]
 
     @property
