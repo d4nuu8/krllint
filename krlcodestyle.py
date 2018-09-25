@@ -332,15 +332,20 @@ class CheckerParameters:
 
     @property
     def comment_line(self):
-        return self.line.split(";", 1)[1]
+        if self.line.lstrip().startswith(";"):
+            return self.line.split(";", 1)[1]
+
+        if self.line.lstrip().startswith("&"):
+            return self.line.split("&", 1)[1]
 
     @property
     def is_code(self):
-        return not self.line.lstrip().startswith(";")
+        return (not self.line.lstrip().startswith(";") and
+                not self.line.lstrip().startswith("&"))
 
     @property
     def is_comment(self):
-        return ";" in self.line
+        return any(char in self.line for char in [";", "&"])
 
 
 class Reporter:
