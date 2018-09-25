@@ -143,10 +143,10 @@ class TabsChecker(BaseChecker):
 @register_checker
 class IndentationChecker(BaseChecker):
     INDENT_PATTERN = re.compile(
-        r"(\b" + r'\b|'.join(INDENT_IDENTIFIERS) + r")", re.IGNORECASE)
+        r"(\b" + r'\b|\b'.join(INDENT_IDENTIFIERS) + r"\b)", re.IGNORECASE)
 
     UNINDENT_PATTERN = re.compile(
-        r"(\b" + r'\b|'.join(UNINDENT_IDENTIFIERS) + r")", re.IGNORECASE)
+        r"(\b" + r'\b|\b'.join(UNINDENT_IDENTIFIERS) + r"\b)", re.IGNORECASE)
 
     def __init__(self):
         self._filename = None
