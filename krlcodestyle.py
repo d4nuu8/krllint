@@ -235,7 +235,8 @@ class BaseMixedCaseChecker(BaseChecker):
 class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b" + r'\b|'.join(KEYWORDS) + r")", re.IGNORECASE)
+        return re.compile(
+            r"(\b" + r'\b|\b'.join(KEYWORDS) + r"\b)", re.IGNORECASE)
 
     def check(self, code_line):
         """E200 lower or mixed case keyword"""
@@ -246,7 +247,7 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b" + r'\b|'.join(BUILT_IN_TYPES) + r")",
+        return re.compile(r"(\b" + r'\b|\b'.join(BUILT_IN_TYPES) + r"\b)",
                           re.IGNORECASE)
 
     def check(self, code_line):
