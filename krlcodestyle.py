@@ -59,9 +59,6 @@ OPERATORS = [
     "+", "-", "*", "/", ":", "=", "==", "<>", ">", "<", ">=", "<="
 ]
 
-INDENT_SIZE = 3
-INDENT_CHAR = " "
-
 INDENT_IDENTIFIERS = [
     "IF", "ELSE", "FOR", "LOOP", "REPEAT", "SWITCH", "CASE", "DEFAULT", "WHILE"
 ]
@@ -139,8 +136,8 @@ class TabsChecker(BaseChecker):
         if "\t" in line:
             yield 0, None
 
-    def fix(self, line):
-        return line.replace("\t", INDENT_CHAR * INDENT_SIZE)
+    def fix(self, line, indent_char, indent_size):
+        return line.replace("\t", indent_char * indent_size)
 
 
 @register_checker
@@ -155,7 +152,7 @@ class IndentationChecker(BaseChecker):
         self._filename = None
         self._indent_level = 0
 
-    def check(self, line, code_line, filename):
+    def check(self, line, filename, code_line, indent_size):
         """E103 wrong indentation"""
         if self._filename != filename:
             self._start_new_file(filename)
@@ -169,7 +166,7 @@ class IndentationChecker(BaseChecker):
             return
 
         indent = len(line) - len(stripped_line)
-        indent_wanted = self._indent_level * INDENT_SIZE
+        indent_wanted = self._indent_level * indent_size
 
         if self._is_indentation_needed(code_line):
             self._increase_indent_level()
@@ -177,8 +174,8 @@ class IndentationChecker(BaseChecker):
         if indent != indent_wanted:
             yield indent, f"found {indent} spaces, exptected {indent_wanted}"
 
-    def fix(self, line):
-        return INDENT_CHAR * (self._indent_level * INDENT_SIZE) + line.lstrip()
+    def fix(self, line, indent_size, indent_char):
+        return indent_char * (self._indent_level * indent_size) + line.lstrip()
 
 
     def _start_new_file(self, filename):
@@ -212,10 +209,7 @@ class ExtraneousWhitespace(BaseChecker):
             yield match.start(), None
 
     def fix(self, code_line):
-        return self.WHITESPACE_PATTERN.sub(self._fix_match, code_line)
-
-    def _fix_match(self, code_line):
-        return " "
+        return self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line)
 
 
 class BaseMixedCaseChecker(BaseChecker):
@@ -285,10 +279,14 @@ class MissingWhiteSpaceArroundOperator(BaseChecker):
 
 
 class CheckerParameters:
-    def __init__(self):
+    def __init__(self, config):
         self._lines = []
         self._next = 0
         self._filename = None
+
+        for attr, value in config.__dict__.items():
+            if not attr.startswith("_"):
+                setattr(self, attr.lower(), value)
 
     def __iter__(self):
         return self
@@ -367,11 +365,12 @@ class Reporter:
 
 
 class StyleChecker:
-    def __init__(self, options):
+    def __init__(self, options, config):
         self.options = options
+        self.config = config
         self.extensions = (".src", ".dat", ".sub")
 
-        self._parameters = CheckerParameters()
+        self._parameters = CheckerParameters(config)
         self._reporter = Reporter()
 
         self._fixed_lines = []
@@ -454,6 +453,8 @@ def _create_arg_parser():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"%(prog)s {__version__}")
+    parser.add_argument("--config",
+                        help="configuration file location")
     parser.add_argument("--fix", action="store_true",
                         help="automatically fix the given inputs")
     parser.add_argument("target", nargs="+", help="file or folder to check")
@@ -464,9 +465,29 @@ def _create_arg_parser():
 def _parse_args():
     return _create_arg_parser().parse_args()
 
+def _load_configuration(filename=None):
+    from importlib.util import spec_from_file_location, module_from_spec
+
+    config_files = [
+        os.path.expanduser("~/.config/krlcodestyle.conf.py"),
+        filename, "./krlcodestyle.conf.py"
+    ]
+
+    for config_file in config_files:
+        if config_file and os.path.exists(config_file):
+            spec = spec_from_file_location("config", config_file)
+            config = module_from_spec(spec)
+            spec.loader.exec_module(config)
+            return config
+
+    raise Exception("It could not be found any configuration file!")
+
 
 def _main():
-    style_checker = StyleChecker(_parse_args())
+    cli_args = _parse_args()
+    config = _load_configuration(cli_args.config)
+    style_checker = StyleChecker(cli_args, config)
+
     style_checker.check()
 
 
