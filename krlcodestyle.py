@@ -60,7 +60,8 @@ OPERATORS = [
 ]
 
 INDENT_IDENTIFIERS = [
-    "IF", "ELSE", r"(?<!WAIT\s)FOR", "LOOP", "REPEAT", "SWITCH", "CASE", "DEFAULT", "WHILE"
+    "IF", "ELSE", r"(?<!WAIT\s)FOR", "LOOP", "REPEAT", "SWITCH", "CASE",
+    "DEFAULT", "WHILE"
 ]
 
 UNINDENT_IDENTIFIERS = [
@@ -344,6 +345,8 @@ class CheckerParameters:
 
         if (self.line.split("&")) == 2:
             return self.line.split("&", 1)[1]
+
+        return ""
 
     @property
     def is_code(self):
