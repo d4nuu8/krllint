@@ -144,22 +144,31 @@ class TabsChecker(BaseChecker):
 @register_checker
 class IndentationChecker(BaseChecker):
     INDENT_PATTERN = re.compile(
-        r"(\b(?:" + "|".join(INDENT_IDENTIFIERS) + r")\b)", re.IGNORECASE)
+        r"(?<!#)(\b(?:" + "|".join(INDENT_IDENTIFIERS) + r")\b)",
+        re.IGNORECASE)
 
     UNINDENT_PATTERN = re.compile(
-        r"(\b(?:" + "|".join(UNINDENT_IDENTIFIERS) + r")\b)", re.IGNORECASE)
+        r"(?<!#)(\b(?:" + "|".join(UNINDENT_IDENTIFIERS) + r")\b)",
+        re.IGNORECASE)
 
     def __init__(self):
         self._filename = None
         self._indent_level = 0
+        self._indent_next_line = False
 
     def check(self, line, filename, code_line, indent_size):
         """E103 wrong indentation"""
         if self._filename != filename:
             self._start_new_file(filename)
 
+        if self._indent_next_line:
+            self._increase_indent_level()
+
         if self._is_unindentation_needed(code_line):
             self._decrease_indent_level()
+
+        if self._is_indentation_needed(code_line):
+            self._indent_next_line = True
 
         stripped_line = line.lstrip()
 
@@ -168,9 +177,6 @@ class IndentationChecker(BaseChecker):
 
         indent = len(line) - len(stripped_line)
         indent_wanted = self._indent_level * indent_size
-
-        if self._is_indentation_needed(code_line):
-            self._increase_indent_level()
 
         if indent != indent_wanted:
             yield indent, f"found {indent} spaces, exptected {indent_wanted}"
@@ -182,6 +188,7 @@ class IndentationChecker(BaseChecker):
     def _start_new_file(self, filename):
         self._filename = filename
         self._indent_level = 0
+        self._indent_next_line = False
 
     @staticmethod
     def _is_indentation_needed(code_line):
@@ -193,6 +200,7 @@ class IndentationChecker(BaseChecker):
 
     def _increase_indent_level(self):
         self._indent_level += 1
+        self._indent_next_line = False
 
     def _decrease_indent_level(self):
         self._indent_level -= 1
@@ -238,7 +246,7 @@ class BaseMixedCaseChecker(BaseChecker):
 class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b(?:" + "|".join(KEYWORDS) + r")\b)",
+        return re.compile(r"(?<!#)(\b(?:" + "|".join(KEYWORDS) + r")\b)",
                           re.IGNORECASE)
 
     def check(self, code_line):
@@ -250,7 +258,7 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b(?:" + "|".join(BUILT_IN_TYPES) + r")\b)",
+        return re.compile(r"(?<!#)(\b(?:" + "|".join(BUILT_IN_TYPES) + r")\b)",
                           re.IGNORECASE)
 
     def check(self, code_line):
