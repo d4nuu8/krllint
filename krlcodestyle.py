@@ -144,10 +144,10 @@ class TabsChecker(BaseChecker):
 @register_checker
 class IndentationChecker(BaseChecker):
     INDENT_PATTERN = re.compile(
-        r"(\b" + r'\b|\b'.join(INDENT_IDENTIFIERS) + r"\b)", re.IGNORECASE)
+        r"(\b(?:" + "|".join(INDENT_IDENTIFIERS) + r")\b)", re.IGNORECASE)
 
     UNINDENT_PATTERN = re.compile(
-        r"(\b" + r'\b|\b'.join(UNINDENT_IDENTIFIERS) + r"\b)", re.IGNORECASE)
+        r"(\b(?:" + "|".join(UNINDENT_IDENTIFIERS) + r")\b)", re.IGNORECASE)
 
     def __init__(self):
         self._filename = None
@@ -238,8 +238,8 @@ class BaseMixedCaseChecker(BaseChecker):
 class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(
-            r"(\b" + r'\b|\b'.join(KEYWORDS) + r"\b)", re.IGNORECASE)
+        return re.compile(r"(\b(?:" + "|".join(KEYWORDS) + r")\b)",
+                          re.IGNORECASE)
 
     def check(self, code_line):
         """E200 lower or mixed case keyword"""
@@ -250,7 +250,7 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     @property
     def pattern(self):
-        return re.compile(r"(\b" + r'\b|\b'.join(BUILT_IN_TYPES) + r"\b)",
+        return re.compile(r"(\b(?:" + "|".join(BUILT_IN_TYPES) + r")\b)",
                           re.IGNORECASE)
 
     def check(self, code_line):
