@@ -329,6 +329,10 @@ class CheckerParameters:
                 if self.line_number < self.total_lines
                 else None)
 
+    @line.setter
+    def line(self, value):
+        self.lines[self.line_number] = value
+
     @property
     def code_line(self):
         return self.line.split(";", 1)[0]
@@ -382,8 +386,6 @@ class StyleChecker:
         self._parameters = CheckerParameters(config)
         self._reporter = Reporter()
 
-        self._fixed_lines = []
-
     checkers = CHECKERS
 
     def check(self):
@@ -404,7 +406,6 @@ class StyleChecker:
 
         with open(filename) as content:
             lines = content.readlines()
-            self._fixed_lines = lines
             self._parameters.start_new_file(filename, lines)
 
         for _ in self._parameters:
@@ -425,7 +426,7 @@ class StyleChecker:
 
     def _fix_file(self, filename):
         with open(filename, "w") as content:
-            content.writelines(self._fixed_lines)
+            content.writelines(self._parameters.lines)
 
     def _check_result(self, results, checker):
         if results is None:
@@ -438,7 +439,7 @@ class StyleChecker:
                 self._fix_line(checker)
 
     def _fix_line(self, checker):
-        self._fixed_lines[self._parameters.line_number] = self._run_fix(checker)
+        self._parameters.line = self._run_fix(checker)
 
     def _run_check(self, checker):
         return self._run_method(checker.check)
