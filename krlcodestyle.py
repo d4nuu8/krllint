@@ -438,6 +438,10 @@ class StyleChecker:
             return
 
         for result in results:
+            code, _, _ = result
+            if code in self.config.DISABLE:
+                continue
+
             self._reporter.error(self._parameters.line_number, result)
 
             if self.options.fix:
