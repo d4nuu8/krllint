@@ -1,6 +1,6 @@
 DEF Test()
 ; E100 trailing whitespace
-INT someVariable
+INT someVariable   
 ; E201 lower or mixed case built-in type
 int someOtherVariable
 Real someThirdVariable
