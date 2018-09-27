@@ -105,10 +105,9 @@ class BaseChecker(ABC):
 
         This method must yield a tuple of the following values for each found
         issue:
-        Issue code - unique issue identifier which is one letter followed by
-                     trhee digits
-        Issue text - a short description of the found issue
-        column     - the column in the checked line where the issue where found
+          - unique issue identifier (str)
+          - a short description of the found issue (str)
+          - the column in the checked line where the issue where found (int)
         """
         pass
 
@@ -131,18 +130,6 @@ class BaseChecker(ABC):
 # Checkers
 ################################################################################
 
-# Error and warning codes
-#
-# --- Whitespace
-# E100 trailing whitespace
-# E102 line contains tab(s)
-# E103 wrong indentation
-# E104 extraneous whitespace
-#
-# --- Style
-# E200 lower or mixed case keyword
-# E201 lower or mixed case built-in type
-
 
 @register_checker
 class TrailingWhitespace(BaseChecker):
@@ -150,7 +137,9 @@ class TrailingWhitespace(BaseChecker):
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
-            yield "E100", "trailing whitespace", len(stripped_line)
+            yield ("trailing-whitespace",
+                   "trailing whitespace",
+                   len(stripped_line))
 
     def fix(self, line):
         return line.strip() + "\n"
@@ -160,7 +149,7 @@ class TrailingWhitespace(BaseChecker):
 class TabsChecker(BaseChecker):
     def check(self, line):
         if "\t" in line:
-            yield "E102", "line contains tab(s)", 0
+            yield "mixed-indentation", "line contains tab(s)", 0
 
     def fix(self, line, indent_char, indent_size):
         return line.replace("\t", indent_char * indent_size)
@@ -203,7 +192,7 @@ class IndentationChecker(BaseChecker):
         indent_wanted = self._indent_level * indent_size
 
         if indent != indent_wanted:
-            yield ("E103",
+            yield ("bad-indentation",
                    (f"wrong indentation (found {indent} spaces, "
                     f"exptected {indent_wanted})"),
                    indent)
@@ -241,7 +230,9 @@ class ExtraneousWhitespace(BaseChecker):
 
     def check(self, code_line):
         for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
-            yield "E104", "extraneous whitespace", match.start()
+            yield ("superfluous-whitespace",
+                   "superfluous whitespace",
+                   match.start())
 
     def fix(self, code_line, comment_line):
         return (self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line) +
@@ -277,7 +268,9 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 
     def check(self, code_line):
         for column in super().check(code_line):
-            yield  "E200", "lower or mixed case keyword", column
+            yield ("wrong-case-keyword",
+                   "lower or mixed case keyword",
+                   column)
 
 
 @register_checker
@@ -289,7 +282,9 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
 
     def check(self, code_line):
         for column in super().check(code_line):
-            yield  "E201", "lower or mixed case built-in type", column
+            yield  ("wrong-case-type",
+                    "lower or mixed case built-in type",
+                    column)
 
 
 ################################################################################
