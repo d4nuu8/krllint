@@ -107,7 +107,6 @@ class BaseChecker(ABC):
 #
 # --- Whitespace
 # E100 trailing whitespace
-# E101 missing whitespace arround operator
 # E102 line contains tab(s)
 # E103 wrong indentation
 # E104 extraneous whitespace
@@ -264,26 +263,6 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
     def check(self, code_line):
         """E201 lower or mixed case built-in type"""
         return super().check(code_line)
-
-
-@register_checker
-class MissingWhiteSpaceArroundOperator(BaseChecker):
-    PATTERN = re.compile(r"(\s)?([+\-*/:=<>]+)(\s)?")
-
-    def check(self, code_line):
-        """E101 missing whitespace arround operator"""
-        for match in self.PATTERN.finditer(code_line):
-            for group in [1, 3]:
-                if match.group(group) is None:
-                    yield match.start(group), None
-
-    def fix(self, code_line, comment_line):
-        return (self.PATTERN.sub(self._fix_match, code_line) +
-                ((";" + comment_line) if comment_line else ""))
-
-    @staticmethod
-    def _fix_match(match):
-        return " " + match.group(0).strip() + " "
 
 
 ################################################################################

@@ -13,12 +13,6 @@ ENDIF
 ; E200 lower or mixed case keyword
 foo B_AND bar
 
-; E101 missing whitespace arround operator
-foo <> bar
-foo <= bar
-foo + bar
-foo = bar
-
 ; E103 wrong indentation
 IF (someVariable) THEN
    foo
