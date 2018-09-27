@@ -379,7 +379,7 @@ class Reporter:
 
     def error(self, line_number, result):
         code, text, column = result
-        print(f"{self._filename}:{line_number + 1}:{column + 1}: {code} {text}")
+        print(f"{line_number + 1}:{column + 1}: {text} [{code}]")
 
 
 class StyleChecker:
