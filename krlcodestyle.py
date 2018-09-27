@@ -210,7 +210,7 @@ class IndentationChecker(BaseChecker):
 
 @register_checker
 class ExtraneousWhitespace(BaseChecker):
-    WHITESPACE_PATTERN = re.compile(r"\s{2,}")
+    WHITESPACE_PATTERN = re.compile(r"(?<=\S)\s{2,}")
 
     def check(self, code_line):
         """E104 extraneous whitespace"""
