@@ -90,12 +90,40 @@ def register_checker(checker):
 
 
 class BaseChecker(ABC):
+    """
+    Encapsulates a method to check and a method to fix a possibly found issue.
+    """
     @abstractmethod
     def check(self):
+        """
+        Checks the code for issues.
+
+        This method is dynamically called by class:: StyleChecker().
+        Possible arguemts are:
+          - All attributes of class:: CheckerParameters
+          - All attributes defined in the configuration file
+
+        This method must yield a tuple of the following values for each found
+        issue:
+        Issue code - unique issue identifier which is one letter followed by
+                     trhee digits
+        Issue text - a short description of the found issue
+        column     - the column in the checked line where the issue where found
+        """
         pass
 
     @abstractmethod
     def fix(self):
+        """
+        Fixes the found issue.
+
+        This method is dynamically called by class:: StyleChecker().
+        Possible arguemts are:
+          - All attributes of class:: CheckerParameters
+          - All attributes defined in the configuration file
+
+        This method must return the fixed line.
+        """
         pass
 
 
@@ -119,11 +147,10 @@ class BaseChecker(ABC):
 @register_checker
 class TrailingWhitespace(BaseChecker):
     def check(self, line):
-        """E100 trailing whitespace"""
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
-            yield len(stripped_line), None
+            yield "E100", "trailing whitespace", len(stripped_line)
 
     def fix(self, line):
         return line.strip() + "\n"
@@ -132,9 +159,8 @@ class TrailingWhitespace(BaseChecker):
 @register_checker
 class TabsChecker(BaseChecker):
     def check(self, line):
-        """E102 line contains tab(s)"""
         if "\t" in line:
-            yield 0, None
+            yield "E102", "line contains tab(s)", 0
 
     def fix(self, line, indent_char, indent_size):
         return line.replace("\t", indent_char * indent_size)
@@ -156,7 +182,6 @@ class IndentationChecker(BaseChecker):
         self._indent_next_line = False
 
     def check(self, line, filename, code_line, indent_size):
-        """E103 wrong indentation"""
         if self._filename != filename:
             self._start_new_file(filename)
 
@@ -178,7 +203,10 @@ class IndentationChecker(BaseChecker):
         indent_wanted = self._indent_level * indent_size
 
         if indent != indent_wanted:
-            yield indent, f"found {indent} spaces, exptected {indent_wanted}"
+            yield ("E103",
+                   (f"wrong indentation (found {indent} spaces, "
+                    f"exptected {indent_wanted})"),
+                   indent)
 
     def fix(self, line, indent_size, indent_char):
         return indent_char * (self._indent_level * indent_size) + line.lstrip()
@@ -212,9 +240,8 @@ class ExtraneousWhitespace(BaseChecker):
     WHITESPACE_PATTERN = re.compile(r"(?<=\S)\s{2,}")
 
     def check(self, code_line):
-        """E104 extraneous whitespace"""
         for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
-            yield match.start(), None
+            yield "E104", "extraneous whitespace", match.start()
 
     def fix(self, code_line, comment_line):
         return (self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line) +
@@ -229,7 +256,7 @@ class BaseMixedCaseChecker(BaseChecker):
     def check(self, code_line):
         for match in self.pattern.finditer(code_line):
             if not str(match.group(1)).isupper():
-                yield match.start(), None
+                yield match.start()
 
     def fix(self, code_line, comment_line):
         return (self.pattern.sub(self._fix_match, code_line) +
@@ -249,8 +276,8 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
                           re.IGNORECASE)
 
     def check(self, code_line):
-        """E200 lower or mixed case keyword"""
-        return super().check(code_line)
+        for column in super().check(code_line):
+            yield  "E200", "lower or mixed case keyword", column
 
 
 @register_checker
@@ -261,8 +288,8 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
                           re.IGNORECASE)
 
     def check(self, code_line):
-        """E201 lower or mixed case built-in type"""
-        return super().check(code_line)
+        for column in super().check(code_line):
+            yield  "E201", "lower or mixed case built-in type", column
 
 
 ################################################################################
@@ -355,16 +382,9 @@ class Reporter:
         self._filename = filename
         print(filename)
 
-    def error(self, line_number, result, checker):
-        error_code = Reporter.ERROR_CODE_PATTERN.match(
-            checker.check.__doc__).group(0)
-        description = checker.check.__doc__
-
-        column, comment = result
-
-        text = f"{self._filename}:{line_number + 1}:{column + 1}: {description}"
-        text += f" ({comment})" if comment is not None else ""
-        print(text)
+    def error(self, line_number, result):
+        code, text, column = result
+        print(f"{self._filename}:{line_number + 1}:{column + 1}: {code} {text}")
 
 
 class StyleChecker:
@@ -423,7 +443,7 @@ class StyleChecker:
             return
 
         for result in results:
-            self._reporter.error(self._parameters.line_number, result, checker)
+            self._reporter.error(self._parameters.line_number, result)
 
             if self.options.fix:
                 self._fix_line(checker)
