@@ -487,9 +487,13 @@ def _parse_args():
 def _load_configuration(filename=None):
     from importlib.util import spec_from_file_location, module_from_spec
 
+    default_name = "krllint.conf.py"
+
     config_files = [
-        os.path.expanduser("~/.config/krllint.conf.py"),
-        filename, "./krllint.conf.py"
+        filename,
+        f"./{default_name}",
+        os.path.expanduser(f"~/.config/{default_name}"),
+        os.path.join(os.path.dirname(__file__), default_name)
     ]
 
     for config_file in config_files:
