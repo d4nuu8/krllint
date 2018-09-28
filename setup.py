@@ -1,25 +1,25 @@
 from setuptools import setup
 
-import krlcodestyle
+import krllint
 
 with open("README.md", "r") as readme:
     LONG_DESCRIPTION = readme.read()
 
 setup(
-    name="krlcodestyle",
-    version=krlcodestyle.__version__,
+    name="krllint",
+    version=krllint.__version__,
     author="Daniel Braunwarth",
     author_email="d4nuu8@gmail.com",
     license="MIT",
     description="KRL code checker",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://github.com/d4nuu8/krlcodestyle",
-    py_modules=["krlcodestyle"],
-    scripts=["krlcodestyle.py"],
+    url="https://github.com/d4nuu8/krllint",
+    py_modules=["krllint"],
+    scripts=["krllint.py"],
     entry_points={
         "console_scripts": [
-            "krlcodestyle = krlcodestyle:_main"
+            "krllint = krllint:_main"
         ]
     },
     python_requires=">=3.5",

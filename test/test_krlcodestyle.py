@@ -6,9 +6,9 @@ import shutil
 import filecmp
 from unittest import TestCase, main
 
-from krlcodestyle import _create_arg_parser, _load_configuration, StyleChecker
+from krllint import _create_arg_parser, _load_configuration, Linter
 
-class TestKrlCodeStyle(TestCase):
+class TestKrlLint(TestCase):
     def test_integration(self):
         test_dir = os.path.dirname(__file__)
 
@@ -27,8 +27,8 @@ class TestKrlCodeStyle(TestCase):
 
         cli_args = _create_arg_parser().parse_args(["--fix", test_file])
         config = _load_configuration(cli_args.config)
-        style_checker = StyleChecker(cli_args, config)
-        style_checker.check()
+        linter = Linter(cli_args, config)
+        linter.lint()
 
         self.assertTrue(filecmp.cmp(test_file, clean_file))
 

@@ -1,26 +1,26 @@
-# krlcodestyle
-krlcodestyle checks and automatically fixes KRL (KUKA Robot Language) code.
+# krllint
+krllint checks and automatically fixes KRL (KUKA Robot Language) code.
 
 ## Installation
-Youe can download ```krlcodestyle.py``` either from github or with this command:
+Youe can download ```krllint.py``` either from github or with this command:
 ```bash
-$ pip install krlcodestyle
+$ pip install krllint
 ```
 
 ### Exmaple usage
 Show help:
 ```bash
-$ krlcodestyle --help
+$ krllint --help
 ```
 
 Check files or folders:
 ```bash
-$ krlcodestyle example.src
-$ krlcodestyle example.src furhter_example.src
-$ krlcodestyle source_dir
+$ krllint example.src
+$ krllint example.src furhter_example.src
+$ krllint source_dir
 ```
 
 Automatically fix code:
 ```bash
-$ krlcodestyle --fix example.src
+$ krllint --fix example.src
 ```

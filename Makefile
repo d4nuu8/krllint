@@ -1,6 +1,6 @@
 .PHONY: lint
 lint:
-	pylint krlcodestyle.py || true
+	pylint krllint.py || true
 
 .PHONY: test
 test:

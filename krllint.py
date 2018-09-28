@@ -77,7 +77,7 @@ def _get_parameters(method):
 
 
 def register_checker(checker):
-    params = _get_parameters(checker.check)
+    params = _get_parameters(checker.lint)
 
     if params[1] == "line" and checker not in CHECKERS["common"]:
         CHECKERS["common"].append(checker())
@@ -91,10 +91,10 @@ def register_checker(checker):
 
 class BaseChecker(ABC):
     """
-    Encapsulates a method to check and a method to fix a possibly found issue.
+    Encapsulates a method to lint and a method to fix a possibly found issue.
     """
     @abstractmethod
-    def check(self):
+    def lint(self):
         """
         Checks the code for issues.
 
@@ -133,7 +133,7 @@ class BaseChecker(ABC):
 
 @register_checker
 class TrailingWhitespace(BaseChecker):
-    def check(self, line):
+    def lint(self, line):
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
@@ -147,7 +147,7 @@ class TrailingWhitespace(BaseChecker):
 
 @register_checker
 class TabsChecker(BaseChecker):
-    def check(self, line):
+    def lint(self, line):
         if "\t" in line:
             yield "mixed-indentation", "line contains tab(s)", 0
 
@@ -170,7 +170,7 @@ class IndentationChecker(BaseChecker):
         self._indent_level = 0
         self._indent_next_line = False
 
-    def check(self, line, filename, code_line, indent_size):
+    def lint(self, line, filename, code_line, indent_size):
         if self._filename != filename:
             self._start_new_file(filename)
 
@@ -228,7 +228,7 @@ class IndentationChecker(BaseChecker):
 class ExtraneousWhitespace(BaseChecker):
     WHITESPACE_PATTERN = re.compile(r"(?<=\S)\s{2,}")
 
-    def check(self, code_line):
+    def lint(self, code_line):
         for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
             yield ("superfluous-whitespace",
                    "superfluous whitespace",
@@ -244,7 +244,7 @@ class BaseMixedCaseChecker(BaseChecker):
     def pattern(self):
         return re.compile(r"", re.IGNORECASE)
 
-    def check(self, code_line):
+    def lint(self, code_line):
         for match in self.pattern.finditer(code_line):
             if not str(match.group(1)).isupper():
                 yield match.start()
@@ -266,8 +266,8 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
         return re.compile(r"(?<!#)(\b(?:" + "|".join(KEYWORDS) + r")\b)",
                           re.IGNORECASE)
 
-    def check(self, code_line):
-        for column in super().check(code_line):
+    def lint(self, code_line):
+        for column in super().lint(code_line):
             yield ("wrong-case-keyword",
                    "lower or mixed case keyword",
                    column)
@@ -280,8 +280,8 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
         return re.compile(r"(?<!#)(\b(?:" + "|".join(BUILT_IN_TYPES) + r")\b)",
                           re.IGNORECASE)
 
-    def check(self, code_line):
-        for column in super().check(code_line):
+    def lint(self, code_line):
+        for column in super().lint(code_line):
             yield  ("wrong-case-type",
                     "lower or mixed case built-in type",
                     column)
@@ -382,7 +382,7 @@ class Reporter:
         print(f"{line_number + 1}:{column + 1}: {text} [{code}]")
 
 
-class StyleChecker:
+class Linter:
     def __init__(self, options, config):
         self.options = options
         self.config = config
@@ -393,20 +393,20 @@ class StyleChecker:
 
     checkers = CHECKERS
 
-    def check(self):
+    def lint(self):
         for target in self.options.target:
             if os.path.isdir(target):
-                self._check_directory(target)
+                self._lint_directory(target)
             else:
-                self._check_file(target)
+                self._lint_file(target)
 
-    def _check_directory(self, dirname):
+    def _lint_directory(self, dirname):
         for dirpath, _, filenames in os.walk(dirname):
             for filename in sorted(filter(
                     lambda file: file.endswith(self.extensions), filenames)):
-                self._check_file(os.path.join(dirpath, filename))
+                self._lint_file(os.path.join(dirpath, filename))
 
-    def _check_file(self, filename):
+    def _lint_file(self, filename):
         self._reporter.start_file(filename)
 
         with open(filename) as content:
@@ -414,13 +414,13 @@ class StyleChecker:
             self._parameters.start_new_file(filename, lines)
 
         for _ in self._parameters:
-            self._run_checkers(StyleChecker.checkers["common"])
+            self._run_checkers(self.checkers["common"])
 
             if self._parameters.is_code:
-                self._run_checkers(StyleChecker.checkers["code"])
+                self._run_checkers(self.checkers["code"])
 
             if self._parameters.is_comment:
-                self._run_checkers(StyleChecker.checkers["comment"])
+                self._run_checkers(self.checkers["comment"])
 
         if self.options.fix:
             self._fix_file(filename)
@@ -451,7 +451,7 @@ class StyleChecker:
         self._parameters.line = self._run_fix(checker)
 
     def _run_check(self, checker):
-        return self._run_method(checker.check)
+        return self._run_method(checker.lint)
 
     def _run_fix(self, checker):
         return self._run_method(checker.fix)
@@ -476,7 +476,7 @@ def _create_arg_parser():
                         help="configuration file location")
     parser.add_argument("--fix", action="store_true",
                         help="automatically fix the given inputs")
-    parser.add_argument("target", nargs="+", help="file or folder to check")
+    parser.add_argument("target", nargs="+", help="file or folder to lint")
 
     return parser
 
@@ -488,8 +488,8 @@ def _load_configuration(filename=None):
     from importlib.util import spec_from_file_location, module_from_spec
 
     config_files = [
-        os.path.expanduser("~/.config/krlcodestyle.conf.py"),
-        filename, "./krlcodestyle.conf.py"
+        os.path.expanduser("~/.config/krllint.conf.py"),
+        filename, "./krllint.conf.py"
     ]
 
     for config_file in config_files:
@@ -505,9 +505,9 @@ def _load_configuration(filename=None):
 def _main():
     cli_args = _parse_args()
     config = _load_configuration(cli_args.config)
-    style_checker = StyleChecker(cli_args, config)
+    linter = Linter(cli_args, config)
 
-    style_checker.check()
+    linter.lint()
 
 
 if __name__ == "__main__":

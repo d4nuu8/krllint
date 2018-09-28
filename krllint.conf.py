@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-krlcodestyle configuration
+krllint configuration
 """
 
 # Character to be used for indentation
