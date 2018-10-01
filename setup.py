@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import krllint
 
@@ -15,11 +15,11 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://github.com/d4nuu8/krllint",
-    py_modules=["krllint"],
-    scripts=["krllint.py"],
+    packages=find_packages(),
+    include_package_data=True,
     entry_points={
         "console_scripts": [
-            "krllint = krllint:_main"
+            "krllint = krllint.krllint:main"
         ]
     },
     python_requires=">=3.5",

@@ -6,7 +6,7 @@ import shutil
 import filecmp
 from unittest import TestCase, main
 
-from krllint import _create_arg_parser, _load_configuration, Linter
+from krllint.linter import _create_arg_parser, _load_configuration, Linter
 
 class TestKrlLint(TestCase):
     def test_integration(self):

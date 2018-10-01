@@ -1,6 +1,6 @@
 .PHONY: lint
 lint:
-	pylint krllint.py || true
+	pylint krllint || true
 
 .PHONY: test
 test:
@@ -20,3 +20,7 @@ dist: clean
 .PHONY: release
 release: dist
 	twine upload dist/*
+
+.PHONY: release_test
+release_test: dist
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*

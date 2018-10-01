@@ -31,9 +31,9 @@ import os
 import re
 import inspect
 from abc import ABC, abstractmethod
+from argparse import ArgumentParser
 
-__version__ = "0.1.2"
-
+import krllint
 
 CHECKERS = {"common": [], "code": [], "comment": []}
 
@@ -383,18 +383,26 @@ class Reporter:
 
 
 class Linter:
-    def __init__(self, options, config):
-        self.options = options
-        self.config = config
+    def __init__(self, cli_args=None, config=None):
+        if cli_args:
+            self.cli_args = cli_args
+        else:
+            self.cli_args = _parse_args()
+
+        if config:
+            self.config = config
+        else:
+            self.config = _load_configuration(self.cli_args.config)
+
         self.extensions = (".src", ".dat", ".sub")
 
-        self._parameters = CheckerParameters(config)
+        self._parameters = CheckerParameters(self.config)
         self._reporter = Reporter()
 
     checkers = CHECKERS
 
     def lint(self):
-        for target in self.options.target:
+        for target in self.cli_args.target:
             if os.path.isdir(target):
                 self._lint_directory(target)
             else:
@@ -422,7 +430,7 @@ class Linter:
             if self._parameters.is_comment:
                 self._run_checkers(self.checkers["comment"])
 
-        if self.options.fix:
+        if self.cli_args.fix:
             self._fix_file(filename)
 
     def _run_checkers(self, checkers):
@@ -444,7 +452,7 @@ class Linter:
 
             self._reporter.error(self._parameters.line_number, result)
 
-            if self.options.fix:
+            if self.cli_args.fix:
                 self._fix_line(checker)
 
     def _fix_line(self, checker):
@@ -467,11 +475,9 @@ class Linter:
 
 
 def _create_arg_parser():
-    from argparse import ArgumentParser
-
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version",
-                        version=f"%(prog)s {__version__}")
+                        version=f"%(prog)s {krllint.__version__}")
     parser.add_argument("--config",
                         help="configuration file location")
     parser.add_argument("--fix", action="store_true",
@@ -484,15 +490,16 @@ def _create_arg_parser():
 def _parse_args():
     return _create_arg_parser().parse_args()
 
+
 def _load_configuration(filename=None):
     from importlib.util import spec_from_file_location, module_from_spec
 
-    default_name = "krllint.conf.py"
+    default_name = "config.py"
 
     config_files = [
         filename,
-        f"./{default_name}",
-        os.path.expanduser(f"~/.config/{default_name}"),
+        f"./krllint.{default_name}",
+        os.path.expanduser(f"~/.config/krllint.{default_name}"),
         os.path.join(os.path.dirname(__file__), default_name)
     ]
 
@@ -504,15 +511,3 @@ def _load_configuration(filename=None):
             return config
 
     raise Exception("It could not be found any configuration file!")
-
-
-def _main():
-    cli_args = _parse_args()
-    config = _load_configuration(cli_args.config)
-    linter = Linter(cli_args, config)
-
-    linter.lint()
-
-
-if __name__ == "__main__":
-    _main()
