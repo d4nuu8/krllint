@@ -30,7 +30,3 @@ class TestKrlLint(TestCase):
         linter.lint()
 
         self.assertTrue(filecmp.cmp(test_file, clean_file))
-
-
-if __name__ == "__main__":
-    main()
