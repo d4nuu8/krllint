@@ -93,9 +93,12 @@ class TrailingWhitespace(BaseRule):
 
 
 @register_rule
-class TabsChecker(BaseRule):
-    def lint(self, line):
-        if "\t" in line:
+class MixedIndentation(BaseRule):
+    def lint(self, line, indent_char):
+        invalid_character = [" ", "\t"]
+        invalid_character.remove(indent_char)
+
+        if any(map(lambda char: char in line, invalid_character)):
             yield "mixed-indentation", "line contains tab(s)", 0
 
     def fix(self, line, indent_char, indent_size):
