@@ -5,14 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: krlcodestyle (Test)",
+            "name": "Python: krllint (Test)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/krlcodestyle.py",
-            "console": "externalTerminal",
+            "program": "${workspaceFolder}/krllint/__main__.py",
+            "console": "none",
             "args": [
-                "test/"
+                "test/dirty.src"
             ],
-        },
+            "env": {
+                "PYTHONPATH": "./"
+            }
+        }
     ]
 }

@@ -19,7 +19,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "krllint = krllint.krllint:main"
+            "krllint = krllint.__main__:main"
         ]
     },
     python_requires=">=3.5",
