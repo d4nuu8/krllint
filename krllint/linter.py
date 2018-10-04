@@ -21,6 +21,9 @@ class Linter:
         else:
             self.cli_args = _parse_args()
 
+        if self.cli_args.generate_config:
+            _create_configuration()
+
         if config:
             self.config = config
         else:
@@ -33,6 +36,7 @@ class Linter:
 
     def lint(self):
         for target in self.cli_args.target:
+            target = os.path.expanduser(target)
             if os.path.isdir(target):
                 self._lint_directory(target)
             else:
@@ -110,6 +114,8 @@ def _create_arg_parser():
                         version=f"%(prog)s {krllint.__version__}")
     parser.add_argument("--config",
                         help="configuration file location")
+    parser.add_argument("--generate-config", action="store_true",
+                        help="Generates configuration file at current location")
     parser.add_argument("--fix", action="store_true",
                         help="automatically fix the given inputs")
     parser.add_argument("target", nargs="+", help="file or folder to lint")
@@ -121,16 +127,32 @@ def _parse_args():
     return _create_arg_parser().parse_args()
 
 
+DEFAULT_CONFIG_NAME = "config.py"
+
+
+def _create_configuration():
+    from shutil import copyfile
+
+    source = os.path.join(os.path.dirname(__file__), DEFAULT_CONFIG_NAME)
+    destination = f"./krllint.{DEFAULT_CONFIG_NAME}"
+
+    if os.path.exists(source):
+        raise Exception(f"Configuration file already exists ({destination})!")
+
+    try:
+        copyfile(source, destination)
+    except:
+        raise Exception("Configuration file could not be created!")
+
+
 def _load_configuration(filename=None):
     from importlib.util import spec_from_file_location, module_from_spec
 
-    default_name = "config.py"
-
     config_files = [
         filename,
-        f"./krllint.{default_name}",
-        os.path.expanduser(f"~/.config/krllint.{default_name}"),
-        os.path.join(os.path.dirname(__file__), default_name)
+        f"./krllint.{DEFAULT_CONFIG_NAME}",
+        os.path.expanduser(f"~/.config/krllint.{DEFAULT_CONFIG_NAME}"),
+        os.path.join(os.path.dirname(__file__), DEFAULT_CONFIG_NAME)
     ]
 
     for config_file in config_files:
