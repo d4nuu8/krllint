@@ -11,6 +11,7 @@ import krllint
 from .tools import get_parameters
 from .parameters import Parameters
 from .rules import RULES
+from .reporter import Message
 
 
 class Linter:
@@ -63,6 +64,8 @@ class Linter:
             if self._parameters.is_comment:
                 self._run_checkers(RULES["comment"])
 
+        self._reporter.finish_file()
+
         if self.cli_args.fix:
             self._fix_file(filename)
 
@@ -79,15 +82,19 @@ class Linter:
             return
 
         for result in results:
-            category, column, code, text = result
+            _, _, code, _ = result
             if code in self.config.DISABLE:
                 continue
 
-            self._reporter.report(
-                (category, self._parameters.line_number, column, code, text))
+            self._reporter.report(self._build_message(result))
 
             if self.cli_args.fix:
                 self._fix_line(checker)
+
+    def _build_message(self, result):
+        category, column, code, message = result
+        return Message(
+            category, code, self._parameters.line_number, column, message)
 
     def _fix_line(self, checker):
         self._parameters.line = self._run_fix(checker)

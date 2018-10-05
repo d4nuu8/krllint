@@ -2,20 +2,12 @@
 
 from abc import ABC, abstractmethod
 import re
-from enum import Enum
 
 from .tools import register_rule
+from .reporter import Category
 
 
 RULES = {"common": [], "code": [], "comment": []}
-
-class Category(Enum):
-    CONVENTION = 1
-    REFACTOR = 2
-    WARNING = 3
-    ERROR = 4
-    FATAL = 5
-    SEPERATOR = 6
 
 
 class BaseRule(ABC):

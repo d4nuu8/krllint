@@ -1,25 +1,45 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractclassmethod
+from collections import namedtuple
+from enum import Enum
+
+
+class Category(Enum):
+    CONVENTION = 1
+    REFACTOR = 2
+    WARNING = 3
+    ERROR = 4
+    FATAL = 5
+    SEPERATOR = 6
+
+
+Message = namedtuple(
+    "Message", ["category", "code", "line_number", "column", "message"])
+
 
 class BaseReporter(ABC):
     def __init__(self):
         self._filename = None
-        self._first_message = True
+        self._messages = []
 
     def start_file(self, filename):
         self._filename = filename
-        self._first_message = True
+        self._messages = []
+
+    def finish_file(self):
+        if self._messages:
+            self.handle_new_file(self._filename)
+
+            for message in self._messages:
+                handle = getattr(
+                    self, "handle_" + message.category.name.lower())
+                handle(message)
+
+        self._filename = None
 
     def report(self, message):
-        category, *_ = message
-
-        if self._first_message:
-            self.handle_new_file(self._filename)
-        self._first_message = False
-
-        handle = getattr(self, "handle_" + category.name.lower())
-        handle(message[1:])
+        self._messages.append(message)
 
     @abstractclassmethod
     def handle_new_file(cls, filename):
@@ -73,8 +93,9 @@ class TextReporter(BaseReporter):
 
     @classmethod
     def handle_message(cls, message):
-        line_number, column, code, text = message
-        print(f"{line_number + 1}:{column + 1}: {text} [{code}]")
+        print(
+            f"{message.line_number + 1}:{message.column + 1}: "
+            f"{message.message} [{message.code}]")
 
 
 class ColorizedTextReporter(BaseReporter):
@@ -129,8 +150,9 @@ class ColorizedTextReporter(BaseReporter):
 
     @classmethod
     def handle_message(cls, message, style):
-        line_number, column, code, text = message
-        print(f"{line_number + 1}:{column + 1}: {cls._colorize(text, style)} [{code}]")
+        print(
+            f"{message.line_number + 1}:{message.column + 1}: "
+            f"{cls._colorize(message.message, style)} [{message.code}]")
 
     @classmethod
     def _colorize(cls, message, style):
