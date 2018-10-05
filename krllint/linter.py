@@ -10,7 +10,6 @@ from argparse import ArgumentParser
 import krllint
 from .tools import get_parameters
 from .parameters import Parameters
-from .reporter import Reporter
 from .rules import RULES
 
 
@@ -32,7 +31,7 @@ class Linter:
         self.extensions = (".src", ".dat", ".sub")
 
         self._parameters = Parameters(self.config)
-        self._reporter = Reporter()
+        self._reporter = self.config.REPORTER()
 
     def lint(self):
         for target in self.cli_args.target:
@@ -80,11 +79,11 @@ class Linter:
             return
 
         for result in results:
-            code, _, _ = result
+            category, column, code, text = result
             if code in self.config.DISABLE:
                 continue
 
-            self._reporter.error(self._parameters.line_number, result)
+            self._reporter.report((category, self._parameters.line_number, column, code, text))
 
             if self.cli_args.fix:
                 self._fix_line(checker)

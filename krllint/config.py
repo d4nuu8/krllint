@@ -4,6 +4,8 @@
 krllint configuration
 """
 
+from krllint.reporter import TextReporter, ColorizedTextReporter
+
 # Character to be used for indentation
 INDENT_CHAR = " "
 
@@ -12,3 +14,6 @@ INDENT_SIZE = 3
 
 # Messages to be disabled (identified by their id e.g bad-indentation)
 DISABLE = []
+
+# Reporter to be used to display results
+REPORTER = ColorizedTextReporter

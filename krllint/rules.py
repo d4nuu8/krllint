@@ -2,11 +2,20 @@
 
 from abc import ABC, abstractmethod
 import re
+from enum import Enum
 
 from .tools import register_rule
 
 
 RULES = {"common": [], "code": [], "comment": []}
+
+class Category(Enum):
+    CONVENTION = 1
+    REFACTOR = 2
+    WARNING = 3
+    ERROR = 4
+    FATAL = 5
+    SEPERATOR = 6
 
 
 class BaseRule(ABC):
@@ -25,9 +34,10 @@ class BaseRule(ABC):
 
         This method must yield a tuple of the following values for each found
         issue:
+          - Issue category (Category)
+          - the column in the checked line where the issue where found (int)
           - unique issue identifier (str)
           - a short description of the found issue (str)
-          - the column in the checked line where the issue where found (int)
         """
         pass
 
@@ -84,9 +94,10 @@ class TrailingWhitespace(BaseRule):
         line = line.rstrip("\r\n")
         stripped_line = line.rstrip()
         if line != stripped_line:
-            yield ("trailing-whitespace",
-                   "trailing whitespace",
-                   len(stripped_line))
+            yield (Category.CONVENTION,
+                   len(stripped_line),
+                   "trailing-whitespace",
+                   "trailing whitespace")
 
     def fix(self, line):
         return line.strip() + "\n"
@@ -99,7 +110,10 @@ class MixedIndentation(BaseRule):
         invalid_character.remove(indent_char)
 
         if any(map(lambda char: char in line, invalid_character)):
-            yield "mixed-indentation", "line contains tab(s)", 0
+            yield (Category.WARNING,
+                   0,
+                   "mixed-indentation",
+                   "line contains tab(s)")
 
     def fix(self, line, indent_char, indent_size):
         return line.replace("\t", indent_char * indent_size)
@@ -142,10 +156,11 @@ class IndentationChecker(BaseRule):
         indent_wanted = self._indent_level * indent_size
 
         if indent != indent_wanted:
-            yield ("bad-indentation",
+            yield (Category.WARNING,
+                   indent,
+                   "bad-indentation",
                    (f"wrong indentation (found {indent} spaces, "
-                    f"exptected {indent_wanted})"),
-                   indent)
+                    f"exptected {indent_wanted})"))
 
     def fix(self, line, indent_size, indent_char):
         return indent_char * (self._indent_level * indent_size) + line.lstrip()
@@ -180,9 +195,10 @@ class ExtraneousWhitespace(BaseRule):
 
     def lint(self, code_line):
         for match in self.WHITESPACE_PATTERN.finditer(code_line.strip()):
-            yield ("superfluous-whitespace",
-                   "superfluous whitespace",
-                   match.start())
+            yield (Category.CONVENTION,
+                   match.start(),
+                   "superfluous-whitespace",
+                   "superfluous whitespace")
 
     def fix(self, code_line, comment_line):
         return (self.WHITESPACE_PATTERN.sub(lambda _: " ", code_line) +
@@ -218,9 +234,10 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
 
     def lint(self, code_line):
         for column in super().lint(code_line):
-            yield ("wrong-case-keyword",
-                   "lower or mixed case keyword",
-                   column)
+            yield (Category.WARNING,
+                   column,
+                   "wrong-case-keyword",
+                   "lower or mixed case keyword")
 
 
 @register_rule
@@ -232,6 +249,7 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
 
     def lint(self, code_line):
         for column in super().lint(code_line):
-            yield  ("wrong-case-type",
-                    "lower or mixed case built-in type",
-                    column)
+            yield  (Category.WARNING,
+                    column,
+                   "wrong-case-type",
+                    "lower or mixed case built-in type")
