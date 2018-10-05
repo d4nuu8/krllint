@@ -83,7 +83,8 @@ class Linter:
             if code in self.config.DISABLE:
                 continue
 
-            self._reporter.report((category, self._parameters.line_number, column, code, text))
+            self._reporter.report(
+                (category, self._parameters.line_number, column, code, text))
 
             if self.cli_args.fix:
                 self._fix_line(checker)

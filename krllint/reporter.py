@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from abc import ABC, abstractclassmethod
-from .rules import Category
 
 class BaseReporter(ABC):
     def __init__(self):

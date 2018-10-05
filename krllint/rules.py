@@ -251,5 +251,5 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
         for column in super().lint(code_line):
             yield  (Category.WARNING,
                     column,
-                   "wrong-case-type",
+                    "wrong-case-type",
                     "lower or mixed case built-in type")
