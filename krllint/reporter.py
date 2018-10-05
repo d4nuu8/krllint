@@ -67,11 +67,15 @@ class BaseReporter(ABC):
 
     @property
     def max_line_number(self):
-        return len(str(max(self._messages, key=lambda message: message.line_number).line_number))
+        return len(str(max(
+            self._messages,
+            key=lambda message: message.line_number).line_number))
 
     @property
     def max_column(self):
-        return len(str(max(self._messages, key=lambda message: message.column).column))
+        return len(str(max(
+            self._messages,
+            key=lambda message: message.column).column))
 
 class TextReporter(BaseReporter):
     def handle_new_file(self):
