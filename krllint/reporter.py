@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from collections import namedtuple
 from enum import Enum
 
@@ -29,7 +29,7 @@ class BaseReporter(ABC):
 
     def finish_file(self):
         if self._messages:
-            self.handle_new_file(self._filename)
+            self.handle_new_file()
 
             for message in self._messages:
                 handle = getattr(
@@ -41,60 +41,61 @@ class BaseReporter(ABC):
     def report(self, message):
         self._messages.append(message)
 
-    @abstractclassmethod
-    def handle_new_file(cls, filename):
+    @abstractmethod
+    def handle_new_file(self):
         pass
 
-    @abstractclassmethod
-    def handle_convention(cls, message):
+    @abstractmethod
+    def handle_convention(self, message):
         pass
 
-    @abstractclassmethod
-    def handle_refactor(cls, message):
+    @abstractmethod
+    def handle_refactor(self, message):
         pass
 
-    @abstractclassmethod
-    def handle_warning(cls, message):
+    @abstractmethod
+    def handle_warning(self, message):
         pass
 
-    @abstractclassmethod
-    def handle_error(cls, message):
+    @abstractmethod
+    def handle_error(self, message):
         pass
 
-    @abstractclassmethod
-    def handle_fatal(cls, message):
+    @abstractmethod
+    def handle_fatal(self, message):
         pass
 
+    @property
+    def max_line_number(self):
+        return len(str(max(self._messages, key=lambda message: message.line_number).line_number))
+
+    @property
+    def max_column(self):
+        return len(str(max(self._messages, key=lambda message: message.column).column))
 
 class TextReporter(BaseReporter):
-    @classmethod
-    def handle_new_file(cls, filename):
-        print(f"***** {filename}")
+    def handle_new_file(self):
+        print(f"***** {self._filename}")
 
-    @classmethod
-    def handle_convention(cls, message):
-        cls.handle_message(message)
+    def handle_convention(self, message):
+        self.handle_message(message)
 
-    @classmethod
-    def handle_refactor(cls, message):
-        cls.handle_message(message)
+    def handle_refactor(self, message):
+        self.handle_message(message)
 
-    @classmethod
-    def handle_warning(cls, message):
-        cls.handle_message(message)
+    def handle_warning(self, message):
+        self.handle_message(message)
 
-    @classmethod
-    def handle_error(cls, message):
-        cls.handle_message(message)
+    def handle_error(self, message):
+        self.handle_message(message)
 
-    @classmethod
-    def handle_fatal(cls, message):
-        cls.handle_message(message)
+    def handle_fatal(self, message):
+        self.handle_message(message)
 
-    @classmethod
-    def handle_message(cls, message):
+    def handle_message(self, message):
         print(
-            f"{message.line_number + 1}:{message.column + 1}: "
+            f"{message.line_number + 1:>{self.max_line_number}}:"
+            f"{message.column + 1:<{self.max_column}}: "
             f"{message.message} [{message.code}]")
 
 
@@ -124,35 +125,29 @@ class ColorizedTextReporter(BaseReporter):
     FATAL = ("red", ["inverse", "bold"])
     SEPERATOR = ("yellow", ["inverse"])
 
-    @classmethod
-    def handle_new_file(cls, filename):
-        print(cls._colorize(f"***** {filename}", cls.SEPERATOR))
+    def handle_new_file(self):
+        print(self._colorize(f"***** {self._filename}", self.SEPERATOR))
 
-    @classmethod
-    def handle_convention(cls, message):
-        cls.handle_message(message, cls.CONVENTION)
+    def handle_convention(self, message):
+        self.handle_message(message, self.CONVENTION)
 
-    @classmethod
-    def handle_refactor(cls, message):
-        cls.handle_message(message, cls.REFACTOR)
+    def handle_refactor(self, message):
+        self.handle_message(message, self.REFACTOR)
 
-    @classmethod
-    def handle_warning(cls, message):
-        cls.handle_message(message, cls.WARNING)
+    def handle_warning(self, message):
+        self.handle_message(message, self.WARNING)
 
-    @classmethod
-    def handle_error(cls, message):
-        cls.handle_message(message, cls.ERROR)
+    def handle_error(self, message):
+        self.handle_message(message, self.ERROR)
 
-    @classmethod
-    def handle_fatal(cls, message):
-        cls.handle_message(message, cls.FATAL)
+    def handle_fatal(self, message):
+        self.handle_message(message, self.FATAL)
 
-    @classmethod
-    def handle_message(cls, message, style):
+    def handle_message(self, message, style):
         print(
-            f"{message.line_number + 1}:{message.column + 1}: "
-            f"{cls._colorize(message.message, style)} [{message.code}]")
+            f"{message.line_number + 1:>{self.max_line_number}}:"
+            f"{message.column + 1:<{self.max_column}}: "
+            f"{self._colorize(message.message, style)} [{message.code}]")
 
     @classmethod
     def _colorize(cls, message, style):
