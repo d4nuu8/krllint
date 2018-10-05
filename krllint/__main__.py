@@ -7,8 +7,8 @@ def main():
     try:
         linter = Linter()
         linter.lint()
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    except Exception as ex:
+        print(f"Error: {str(ex)}")
 
 if __name__ == "__main__":
     main()
