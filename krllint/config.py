@@ -16,4 +16,7 @@ INDENT_SIZE = 3
 DISABLE = []
 
 # Reporter to be used to display results
+# Available reporters are:
+#   - TextReporter
+#   - ColorizedTextReporter
 REPORTER = ColorizedTextReporter
