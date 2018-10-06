@@ -23,6 +23,9 @@ setup(
         ]
     },
     python_requires=">=3.5",
+    install_requires=[
+        "colorama"
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",

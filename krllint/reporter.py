@@ -129,6 +129,11 @@ class ColorizedTextReporter(BaseReporter):
     FATAL = ("red", ["inverse", "bold"])
     SEPERATOR = ("yellow", ["inverse"])
 
+    def __init__(self):
+        super().__init__()
+        from colorama import init
+        init()
+
     def handle_new_file(self):
         print(self._colorize(f"***** {self._filename}", self.SEPERATOR))
 
