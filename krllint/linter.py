@@ -5,7 +5,7 @@ Checks and automatically fixes KRL (KUKA Robot Language) code.
 """
 
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Action
 
 import krllint
 from .tools import get_parameters
@@ -114,8 +114,20 @@ class Linter:
 
         return method(*parameters)
 
-
 def _create_arg_parser():
+    class TargetAction(Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if namespace.generate_config and not values:
+                setattr(self, self.dest, [])
+                namespace.target = []
+            elif values:
+                setattr(self, self.dest, values)
+                namespace.target = values
+            else:
+                parser.error(
+                    f"the following arguments are required: {self.dest}")
+
+
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version",
                         version=f"%(prog)s {krllint.__version__}")
@@ -125,7 +137,8 @@ def _create_arg_parser():
                         help="Generates configuration file at current location")
     parser.add_argument("--fix", action="store_true",
                         help="automatically fix the given inputs")
-    parser.add_argument("target", nargs="+", help="file or folder to lint")
+    parser.add_argument("target", action=TargetAction, nargs="*",
+                        help="file or folder to lint")
 
     return parser
 
@@ -143,7 +156,7 @@ def _create_configuration():
     source = os.path.join(os.path.dirname(__file__), DEFAULT_CONFIG_NAME)
     destination = f"./krllint.{DEFAULT_CONFIG_NAME}"
 
-    if os.path.exists(source):
+    if os.path.exists(destination):
         raise Exception(f"Configuration file already exists ({destination})!")
 
     try:
