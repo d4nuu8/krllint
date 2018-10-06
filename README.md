@@ -24,3 +24,20 @@ Automatically fix code:
 ```bash
 $ krllint --fix example.src
 ```
+
+Create a configuration file at the current working directory:
+```bash
+$ krllint --generate-config
+```
+
+krllint tries to load configuration files with the following sequence:
+```krllint.conf.py```:
+1. Explicitly defined as argument
+2. Current working directory
+3. ```~/.config/```
+4. Default configuration of krllint
+
+Explicitly loading of a configuration file:
+```bash
+$ krllint --config krllint.config.py
+```
