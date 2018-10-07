@@ -42,6 +42,8 @@ class Linter:
             else:
                 self._lint_file(target)
 
+            self._reporter.finalize()
+
     def _lint_directory(self, dirname):
         for dirpath, _, filenames in os.walk(dirname):
             for filename in sorted(filter(
@@ -64,7 +66,7 @@ class Linter:
             if self._parameters.is_comment:
                 self._run_checkers(RULES["comment"])
 
-        self._reporter.finish_file()
+        self._reporter.finalize_file()
 
         if self.cli_args.fix:
             self._fix_file(filename)
@@ -113,6 +115,7 @@ class Linter:
             parameters.append(getattr(self._parameters, parameter))
 
         return method(*parameters)
+
 
 def _create_arg_parser():
     class TargetAction(Action):

@@ -22,12 +22,19 @@ class BaseReporter(ABC):
     def __init__(self):
         self._filename = None
         self._messages = []
+        self.found_issues = {
+            Category.CONVENTION: 0,
+            Category.REFACTOR: 0,
+            Category.WARNING: 0,
+            Category.ERROR: 0,
+            Category.FATAL: 0
+        }
 
     def start_file(self, filename):
         self._filename = filename
         self._messages = []
 
-    def finish_file(self):
+    def finalize_file(self):
         if self._messages:
             self.handle_new_file()
 
@@ -38,7 +45,12 @@ class BaseReporter(ABC):
 
         self._filename = None
 
+    @abstractmethod
+    def finalize(self):
+        pass
+
     def report(self, message):
+        self.found_issues[message.category] += 1
         self._messages.append(message)
 
     @abstractmethod
@@ -81,6 +93,15 @@ class TextReporter(BaseReporter):
     def handle_new_file(self):
         print(f"***** {self._filename}")
 
+    def finalize(self):
+        print(20 * "-")
+        print("Result:")
+        print(f"{self.found_issues[Category.CONVENTION]} violated conventions")
+        print(f"{self.found_issues[Category.REFACTOR]} possible refactorings")
+        print(f"{self.found_issues[Category.WARNING]} found warnings")
+        print(f"{self.found_issues[Category.ERROR]} found errors")
+        print(f"{self.found_issues[Category.FATAL]} fatal errors")
+
     def handle_convention(self, message):
         self.handle_message(message)
 
@@ -103,7 +124,7 @@ class TextReporter(BaseReporter):
             f"{message.message} [{message.code}]")
 
 
-class ColorizedTextReporter(BaseReporter):
+class ColorizedTextReporter(TextReporter):
     PREFIX = "\033["
     END = "m"
     RESET = PREFIX + "0" + END
