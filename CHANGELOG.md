@@ -1,5 +1,8 @@
 # Changelog
 ## Next version
+- Nothing so far
+
+## 0.1.8
 - Added summary of found issues to reporter which will be print at the end of
   each usage of krllint
 - Added rule to check inline forms (ILFs) for their indentation. They should not
