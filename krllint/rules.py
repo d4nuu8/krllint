@@ -92,7 +92,7 @@ class TrailingWhitespace(BaseRule):
                    "trailing whitespace")
 
     def fix(self, line):
-        return line.strip() + "\n"
+        return line.rstrip() + "\n"
 
 
 @register_rule
@@ -121,15 +121,73 @@ class IndentationChecker(BaseRule):
         r"(?<!#)(\b(?:" + "|".join(UNINDENT_IDENTIFIERS) + r")\b)",
         re.IGNORECASE)
 
+    ILF_PATTERN = re.compile(
+        r";FOLD.*;%\{.*\}",
+        re.IGNORECASE
+    )
+
     def __init__(self):
         self._filename = None
         self._indent_level = 0
         self._indent_next_line = False
+        self._fold_level = 0
+        self._suppress_indent = False
+        self._reset_supress_indent = False
 
     def lint(self, line, filename, code_line, indent_size):
         if self._filename != filename:
             self._start_new_file(filename)
 
+        if self._reset_supress_indent:
+            self._reset_supress_indent = False
+            self._suppress_indent = False
+
+        if self._suppress_indent:
+            self._analyse_inline_form(line)
+        elif self._is_inline_form(line):
+            self._suppress_indent = True
+        else:
+            self._analyse_indentation(code_line)
+
+        stripped_line = line.lstrip()
+
+        if not stripped_line:
+            return
+
+        indent = len(line) - len(stripped_line)
+
+        if self._suppress_indent:
+            indent_wanted = 0
+        else:
+            indent_wanted = self._indent_level * indent_size
+
+        if indent != indent_wanted:
+            if self._suppress_indent:
+                yield (Category.WARNING,
+                       indent,
+                       "bad-indented-inline-form",
+                       (f"wrong indentation (found {indent} spaces, "
+                        f"exptected {indent_wanted})"))
+            else:
+                yield (Category.WARNING,
+                       indent,
+                       "bad-indentation",
+                       (f"wrong indentation (found {indent} spaces, "
+                        f"exptected {indent_wanted})"))
+
+    def fix(self, line, indent_size, indent_char):
+        if self._suppress_indent:
+            return line.lstrip()
+
+        return indent_char * (self._indent_level * indent_size) + line.lstrip()
+
+
+    def _start_new_file(self, filename):
+        self._filename = filename
+        self._indent_level = 0
+        self._indent_next_line = False
+
+    def _analyse_indentation(self, code_line):
         if self._indent_next_line:
             self._increase_indent_level()
 
@@ -139,29 +197,12 @@ class IndentationChecker(BaseRule):
         if self._is_indentation_needed(code_line):
             self._indent_next_line = True
 
-        stripped_line = line.lstrip()
+    def _analyse_inline_form(self, code_line):
+        if self._is_fold_start(code_line):
+            self._increase_fold_level()
 
-        if not stripped_line:
-            return
-
-        indent = len(line) - len(stripped_line)
-        indent_wanted = self._indent_level * indent_size
-
-        if indent != indent_wanted:
-            yield (Category.WARNING,
-                   indent,
-                   "bad-indentation",
-                   (f"wrong indentation (found {indent} spaces, "
-                    f"exptected {indent_wanted})"))
-
-    def fix(self, line, indent_size, indent_char):
-        return indent_char * (self._indent_level * indent_size) + line.lstrip()
-
-
-    def _start_new_file(self, filename):
-        self._filename = filename
-        self._indent_level = 0
-        self._indent_next_line = False
+        if self._is_fold_end(code_line):
+            self._decrease_fold_level()
 
     @staticmethod
     def _is_indentation_needed(code_line):
@@ -171,6 +212,18 @@ class IndentationChecker(BaseRule):
     def _is_unindentation_needed(code_line):
         return not IndentationChecker.UNINDENT_PATTERN.search(code_line) is None
 
+    @staticmethod
+    def _is_inline_form(code_line):
+        return not IndentationChecker.ILF_PATTERN.search(code_line) is None
+
+    @staticmethod
+    def _is_fold_start(code_line):
+        return code_line.lstrip().startswith(";FOLD")
+
+    @staticmethod
+    def _is_fold_end(code_line):
+        return code_line.lstrip().startswith(";ENDFOLD")
+
     def _increase_indent_level(self):
         self._indent_level += 1
         self._indent_next_line = False
@@ -179,6 +232,15 @@ class IndentationChecker(BaseRule):
         self._indent_level -= 1
         if self._indent_level < 0:
             self._indent_level = 0
+
+    def _increase_fold_level(self):
+        self._fold_level += 1
+
+    def _decrease_fold_level(self):
+        self._fold_level -= 1
+        if self._fold_level < 0:
+            self._fold_level = 0
+            self._reset_supress_indent = True
 
 
 @register_rule
