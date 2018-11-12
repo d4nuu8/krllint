@@ -11,9 +11,10 @@ RULES = {"common": [], "code": [], "comment": []}
 class RuleMeta(ABCMeta):
     def __new__(cls, name, bases, namespace, **kwargs):
         instance = super().__new__(cls, name, bases, namespace, **kwargs)
-        cls.__register_rule(cls, instance)
+        cls.__register_rule(instance)
         return instance
 
+    @classmethod
     def __register_rule(cls, rule):
         params = get_parameters(rule.lint)
 
