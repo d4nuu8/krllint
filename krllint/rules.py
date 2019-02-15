@@ -1,51 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from abc import ABC, abstractmethod
 import re
 
-from .tools import register_rule
 from .reporter import Category
-
-
-RULES = {"common": [], "code": [], "comment": []}
-
-
-class BaseRule(ABC):
-    """
-    Encapsulates a method to lint and a method to fix a possibly found issue.
-    """
-    @abstractmethod
-    def lint(self):
-        """
-        Checks the code for issues.
-
-        This method is dynamically called by class:: StyleChecker().
-        Possible arguemts are:
-          - All attributes of class:: CheckerParameters
-          - All attributes defined in the configuration file
-
-        This method must yield a tuple of the following values for each found
-        issue:
-          - Issue category (Category)
-          - the column in the checked line where the issue where found (int)
-          - unique issue identifier (str)
-          - a short description of the found issue (str)
-        """
-        pass
-
-    @abstractmethod
-    def fix(self):
-        """
-        Fixes the found issue.
-
-        This method is dynamically called by class:: StyleChecker().
-        Possible arguemts are:
-          - All attributes of class:: CheckerParameters
-          - All attributes defined in the configuration file
-
-        This method must return the fixed line.
-        """
-        pass
+from .api import BaseRule
 
 
 KEYWORDS = [
@@ -80,7 +38,7 @@ UNINDENT_IDENTIFIERS = [
     "ENDSWITCH", "ENDWHILE"
 ]
 
-@register_rule
+
 class TrailingWhitespace(BaseRule):
     def lint(self, line):
         line = line.rstrip("\r\n")
@@ -95,7 +53,6 @@ class TrailingWhitespace(BaseRule):
         return line.rstrip() + "\n"
 
 
-@register_rule
 class MixedIndentation(BaseRule):
     def lint(self, line, indent_char):
         invalid_character = [" ", "\t"]
@@ -111,7 +68,6 @@ class MixedIndentation(BaseRule):
         return line.replace("\t", indent_char * indent_size)
 
 
-@register_rule
 class IndentationChecker(BaseRule):
     INDENT_PATTERN = re.compile(
         r"(?<!#)(\b(?:" + "|".join(INDENT_IDENTIFIERS) + r")\b)",
@@ -243,7 +199,6 @@ class IndentationChecker(BaseRule):
             self._reset_supress_indent = True
 
 
-@register_rule
 class ExtraneousWhitespace(BaseRule):
     WHITESPACE_PATTERN = re.compile(r"(?<=\S)\s{2,}")
 
@@ -259,7 +214,7 @@ class ExtraneousWhitespace(BaseRule):
                 ((";" + comment_line) if comment_line else ""))
 
 
-class BaseMixedCaseChecker(BaseRule):
+class BaseMixedCaseChecker:
     @property
     def pattern(self):
         return re.compile(r"", re.IGNORECASE)
@@ -279,8 +234,7 @@ class BaseMixedCaseChecker(BaseRule):
         return target if target.isupper() else target.upper()
 
 
-@register_rule
-class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
+class LowerOrMixedCaseKeyword(BaseMixedCaseChecker, BaseRule):
     @property
     def pattern(self):
         return re.compile(r"(?<!#)(\b(?:" + "|".join(KEYWORDS) + r")\b)",
@@ -294,8 +248,7 @@ class LowerOrMixedCaseKeyword(BaseMixedCaseChecker):
                    "lower or mixed case keyword")
 
 
-@register_rule
-class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
+class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker, BaseRule):
     @property
     def pattern(self):
         return re.compile(r"(?<!#)(\b(?:" + "|".join(BUILT_IN_TYPES) + r")\b)",

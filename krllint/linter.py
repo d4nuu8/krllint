@@ -8,10 +8,12 @@ import os
 from argparse import ArgumentParser, Action
 
 import krllint
+import krllint.rules
 from .tools import get_parameters
 from .parameters import Parameters
-from .rules import RULES
+from .api import RULES
 from .reporter import Message
+
 
 
 class Linter:
