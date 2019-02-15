@@ -99,7 +99,9 @@ class Linter:
             category, code, self._parameters.line_number, column, message)
 
     def _fix_line(self, checker):
-        self._parameters.line = self._run_fix(checker)
+        fixed_line = self._run_fix(checker)
+        if fixed_line is not None:
+            self._parameters.line = fixed_line
 
     def _run_check(self, checker):
         return self._run_method(checker.lint)

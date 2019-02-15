@@ -20,3 +20,6 @@ DISABLE = []
 #   - TextReporter
 #   - ColorizedTextReporter
 REPORTER = ColorizedTextReporter
+
+# List of strings (case insensitive) which identifies open tasks in comment lines
+OPEN_TASK_IDENTIFIERS = ["TODO", "FIXME"]

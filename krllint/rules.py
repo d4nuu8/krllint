@@ -307,3 +307,22 @@ class LowerOrMixedCaseBuiltInType(BaseMixedCaseChecker):
                     column,
                     "wrong-case-type",
                     "lower or mixed case built-in type")
+
+
+@register_rule
+class OpenTask(BaseRule):
+    def lint(self, comment_line, open_task_identifiers):
+        def pattern():
+            return re.compile(
+                r"\b(" +
+                "|".join(open_task_identifiers) +
+                r")\b\s?(.*)")
+
+        for match in pattern().finditer(comment_line):
+            yield (Category.WARNING,
+                   match.start(),
+                   "open-task",
+                   f"complete open task ({match.group(2)})")
+
+    def fix(self):
+        pass

@@ -44,3 +44,7 @@ IF (foo) THEN
    ;ENDFOLD (BAS INI)
 ENDIF
 END
+
+; open-task
+; TODO Here is something to be done
+; FIXME Here is also something to be done
