@@ -52,7 +52,6 @@ class BaseRule(metaclass=RuleMeta):
           - unique issue identifier (str)
           - a short description of the found issue (str)
         """
-        pass
 
     @abstractmethod
     def fix(self):
@@ -66,4 +65,3 @@ class BaseRule(metaclass=RuleMeta):
 
         This method must return the fixed line.
         """
-        pass
