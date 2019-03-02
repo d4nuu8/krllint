@@ -13,8 +13,8 @@ class IndentationCheckerTestCase(TestCase):
         "      bar\n",
         "ENDIF\n",
         "\n",
-        "   ;FOLD PTP;%{PE}",
-        "   ;ENDFOLD"
+        "   ;FOLD PTP;%{PE}\n",
+        "   ;ENDFOLD\n"
     ]
 
     FIXED_INPUT = [
@@ -22,8 +22,8 @@ class IndentationCheckerTestCase(TestCase):
         "   bar\n",
         "ENDIF\n",
         "\n",
-        ";FOLD PTP;%{PE}",
-        ";ENDFOLD"
+        ";FOLD PTP;%{PE}\n",
+        ";ENDFOLD\n"
     ]
 
     def test_rule_without_fix(self):
