@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from abc import ABC, abstractproperty
 
 from .reporter import Category
 from .api import BaseRule
@@ -216,10 +217,10 @@ class ExtraneousWhitespace(BaseRule):
                 ((";" + comment_line) if comment_line else ""))
 
 
-class BaseMixedCaseChecker:
-    @property
+class BaseMixedCaseChecker(ABC):
+    @abstractproperty
     def pattern(self):
-        return re.compile(r"", re.IGNORECASE)
+        raise NotImplementedError
 
     def lint(self, code_line):
         for match in self.pattern.finditer(code_line):
