@@ -15,7 +15,6 @@ from .api import RULES
 from .reporter import Message
 
 
-
 class Linter:
     def __init__(self, cli_args=None, config=None):
         if cli_args:
@@ -40,24 +39,33 @@ class Linter:
         for target in self.cli_args.target:
             target = os.path.expanduser(target)
             if os.path.isdir(target):
-                self._lint_directory(target)
+                self.lint_directory(target)
             else:
-                self._lint_file(target)
+                self.lint_file(target)
 
             self._reporter.finalize()
 
-    def _lint_directory(self, dirname):
+    def lint_directory(self, dirname):
         for dirpath, _, filenames in os.walk(dirname):
             for filename in sorted(filter(
                     lambda file: file.endswith(self.extensions), filenames)):
-                self._lint_file(os.path.join(dirpath, filename))
+                self.lint_file(os.path.join(dirpath, filename))
 
-    def _lint_file(self, filename):
+    def lint_file(self, filename):
         self._reporter.start_file(filename)
 
+        lines = []
         with open(filename) as content:
             lines = content.readlines()
-            self._parameters.start_new_file(filename, lines)
+
+        self.lint_lines(filename, lines)
+
+        if self.cli_args.fix:
+            self._fix_file(filename)
+
+    def lint_lines(self, identifier, lines):
+        self._reporter.start_file(identifier)
+        self._parameters.start_new_file(identifier, lines)
 
         for _ in self._parameters:
             self._run_checkers(RULES["common"])
@@ -70,8 +78,7 @@ class Linter:
 
         self._reporter.finalize_file()
 
-        if self.cli_args.fix:
-            self._fix_file(filename)
+        return (self._parameters.lines, self._reporter)
 
     def _run_checkers(self, rules):
         for rule in rules:

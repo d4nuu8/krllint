@@ -65,7 +65,9 @@ class MixedIndentation(BaseRule):
                    "line contains tab(s)")
 
     def fix(self, line, indent_char, indent_size):
-        return line.replace("\t", indent_char * indent_size)
+        invalid_character = [" ", "\t"]
+        invalid_character.remove(indent_char)
+        return line.replace(invalid_character[0], indent_char * indent_size)
 
 
 class IndentationChecker(BaseRule):

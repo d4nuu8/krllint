@@ -20,8 +20,8 @@ Message = namedtuple(
 
 class BaseReporter(ABC):
     def __init__(self):
-        self._filename = None
-        self._messages = []
+        self.filename = None
+        self.messages = []
         self.found_issues = {
             Category.CONVENTION: 0,
             Category.REFACTOR: 0,
@@ -31,19 +31,19 @@ class BaseReporter(ABC):
         }
 
     def start_file(self, filename):
-        self._filename = filename
-        self._messages = []
+        self.filename = filename
+        self.messages = []
 
     def finalize_file(self):
-        if self._messages:
+        if self.messages:
             self.handle_new_file()
 
-            for message in self._messages:
+            for message in self.messages:
                 handle = getattr(
                     self, "handle_" + message.category.name.lower())
                 handle(message)
 
-        self._filename = None
+        self.filename = None
 
     @abstractmethod
     def finalize(self):
@@ -51,7 +51,7 @@ class BaseReporter(ABC):
 
     def report(self, message):
         self.found_issues[message.category] += 1
-        self._messages.append(message)
+        self.messages.append(message)
 
     @abstractmethod
     def handle_new_file(self):
@@ -80,18 +80,42 @@ class BaseReporter(ABC):
     @property
     def max_line_number(self):
         return len(str(max(
-            self._messages,
+            self.messages,
             key=lambda message: message.line_number).line_number))
 
     @property
     def max_column(self):
         return len(str(max(
-            self._messages,
+            self.messages,
             key=lambda message: message.column).column))
+
+
+class MemoryReporter(BaseReporter):
+    def finalize(self):
+        pass
+
+    def handle_new_file(self):
+        pass
+
+    def handle_convention(self, message):
+        pass
+
+    def handle_refactor(self, message):
+        pass
+
+    def handle_warning(self, message):
+        pass
+
+    def handle_error(self, message):
+        pass
+
+    def handle_fatal(self, message):
+        pass
+
 
 class TextReporter(BaseReporter):
     def handle_new_file(self):
-        print(f"***** {self._filename}")
+        print(f"***** {self.filename}")
 
     def finalize(self):
         print(20 * "-")
@@ -156,7 +180,7 @@ class ColorizedTextReporter(TextReporter):
         init()
 
     def handle_new_file(self):
-        print(self._colorize(f"***** {self._filename}", self.SEPERATOR))
+        print(self._colorize(f"***** {self.filename}", self.SEPERATOR))
 
     def handle_convention(self, message):
         self.handle_message(message, self.CONVENTION)

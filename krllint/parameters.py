@@ -16,12 +16,12 @@ class Parameters:
     def __next__(self):
         if self._next == self.total_lines:
             raise StopIteration
-        else:
-            self._next += 1
-            return self.lines[self.line_number]
+
+        self._next += 1
+        return self.lines[self.line_number]
 
     def start_new_file(self, filename, lines):
-        self._lines = lines
+        self._lines = lines.copy()
         self._next = 0
         self._filename = filename
 
